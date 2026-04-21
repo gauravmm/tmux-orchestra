@@ -12,6 +12,11 @@ render_reset() {
 	printf '\033[0m'
 }
 
+render_bold_start() {
+	render_supports_color || return 0
+	printf '\033[1m'
+}
+
 render_inverse_start() {
 	render_supports_color || return 0
 	printf '\033[7m'
@@ -22,28 +27,28 @@ render_color_start() {
 	render_supports_color || return 0
 
 	case "$color" in
-		'#'*)
-			hex=${color#\#}
-			case ${#hex} in
-				6)
-					r=$(printf '%s' "$hex" | cut -c1-2)
-					g=$(printf '%s' "$hex" | cut -c3-4)
-					b=$(printf '%s' "$hex" | cut -c5-6)
-					printf '\033[38;2;%d;%d;%dm' "0x$r" "0x$g" "0x$b"
-					;;
-			esac
+	'#'*)
+		hex=${color#\#}
+		case ${#hex} in
+		6)
+			r=$(printf '%s' "$hex" | cut -c1-2)
+			g=$(printf '%s' "$hex" | cut -c3-4)
+			b=$(printf '%s' "$hex" | cut -c5-6)
+			printf '\033[38;2;%d;%d;%dm' "0x$r" "0x$g" "0x$b"
 			;;
-		black) tput setaf 0 2>/dev/null || true ;;
-		red) tput setaf 1 2>/dev/null || true ;;
-		green) tput setaf 2 2>/dev/null || true ;;
-		yellow) tput setaf 3 2>/dev/null || true ;;
-		blue) tput setaf 4 2>/dev/null || true ;;
-		magenta) tput setaf 5 2>/dev/null || true ;;
-		cyan) tput setaf 6 2>/dev/null || true ;;
-		white|default) tput setaf 7 2>/dev/null || true ;;
-		*)
-			printf '%s' ''
-			;;
+		esac
+		;;
+	black) tput setaf 0 2>/dev/null || true ;;
+	red) tput setaf 1 2>/dev/null || true ;;
+	green) tput setaf 2 2>/dev/null || true ;;
+	yellow) tput setaf 3 2>/dev/null || true ;;
+	blue) tput setaf 4 2>/dev/null || true ;;
+	magenta) tput setaf 5 2>/dev/null || true ;;
+	cyan) tput setaf 6 2>/dev/null || true ;;
+	white | default) tput setaf 7 2>/dev/null || true ;;
+	*)
+		printf '%s' ''
+		;;
 	esac
 }
 
@@ -96,32 +101,32 @@ render_state_glyph() {
 	frame=$2
 	nerd=$3
 	case "$state" in
-		running)
-			if [ "$nerd" = 'on' ]; then
-				set -- '⠋' '⠙' '⠹' '⠸'
-				eval "printf '%s' \"\${$((frame % 4 + 1))}\""
-			else
-				printf '%s' '*'
-			fi
-			;;
-		waiting)
-			if [ "$nerd" = 'on' ]; then
-				set -- '◐' '◓' '◑' '◒'
-				eval "printf '%s' \"\${$((frame % 4 + 1))}\""
-			else
-				printf '%s' '?'
-			fi
-			;;
-		done)
-			if [ "$nerd" = 'on' ]; then
-				printf '%s' '✓'
-			else
-				printf '%s' 'OK'
-			fi
-			;;
-		*)
-			printf '%s' ''
-			;;
+	running)
+		if [ "$nerd" = 'on' ]; then
+			set -- '⠋' '⠙' '⠹' '⠸'
+			eval "printf '%s' \"\${$((frame % 4 + 1))}\""
+		else
+			printf '%s' '*'
+		fi
+		;;
+	waiting)
+		if [ "$nerd" = 'on' ]; then
+			set -- '◐' '◓' '◑' '◒'
+			eval "printf '%s' \"\${$((frame % 4 + 1))}\""
+		else
+			printf '%s' '?'
+		fi
+		;;
+	done)
+		if [ "$nerd" = 'on' ]; then
+			printf '%s' '✓'
+		else
+			printf '%s' 'OK'
+		fi
+		;;
+	*)
+		printf '%s' ''
+		;;
 	esac
 }
 
@@ -196,19 +201,37 @@ render_activity() {
 	last_cmd=$4
 
 	case "$state" in
-		running|waiting)
-			printf '%s' "$action"
-			;;
-		*)
-			if [ -n "$cwd" ] && [ -n "$last_cmd" ]; then
-				printf 'cwd=%s  $ %s' "$cwd" "$last_cmd"
-			elif [ -n "$last_cmd" ]; then
-				printf '$ %s' "$last_cmd"
-			else
-				printf '%s' "$cwd"
-			fi
-			;;
+	running | waiting)
+		printf '%s' "$action"
+		;;
+	*)
+		if [ -n "$cwd" ] && [ -n "$last_cmd" ]; then
+			printf 'cwd=%s  $ %s' "$cwd" "$last_cmd"
+		elif [ -n "$last_cmd" ]; then
+			printf '$ %s' "$last_cmd"
+		else
+			printf '%s' "$cwd"
+		fi
+		;;
 	esac
+}
+
+# Emit a printf-wrapped string with optional style applied and reset afterwards.
+# Usage: with_style STYLE COLOR [printf_args...]
+# STYLE: 'bold', 'color', 'bold_color', or '' (none)
+with_style() {
+	style=$1
+	color=$2
+	fmt=$3
+	shift 3
+	case "$style" in
+		bold) render_bold_start ;;
+		color) render_color_start "$color" ;;
+		bold_color) render_bold_start; render_color_start "$color" ;;
+	esac
+	# shellcheck disable=SC2059
+	printf "$fmt" "$@"
+	[ -z "$style" ] || render_reset
 }
 
 render_window_block() {
@@ -235,9 +258,9 @@ render_window_block() {
 
 	title_text=$window_name
 	title_text=$title_text$(render_named_branch "$branch" "$nerd")
-	title_body=$(render_trim $((width - 3)) "$title_text")
+	title_body=$(render_trim $((width - 4)) "$title_text")
 	title_len=$(printf '%s' "$title_body" | awk 'BEGIN { ORS = "" } { print length($0) }')
-	pad=$((width - title_len - 3))
+	pad=$((width - title_len - 4))
 	[ "$pad" -lt 0 ] && pad=0
 
 	activity=$(render_activity "$state" "$action" "$cwd" "$last_cmd")
@@ -273,47 +296,39 @@ render_window_block() {
 		meta_text=$(render_trim $((width - 2)) "$meta_text")
 	fi
 
-	# Title row: active window gets inverse highlight; waiting windows get colored border.
+	# Pick border characters: heavy for active, light for inactive.
 	if [ "$window_active" = '1' ]; then
-		render_inverse_start
+		_tl='┏'
+		_h='━'
+		_v='┃'
+		_bl='┗'
+	else
+		_tl='┌'
+		_h='─'
+		_v='│'
+		_bl='└'
+	fi
+
+	# Pick style: bold for active, color for waiting, both if both.
+	title_style=''
+	if [ "$window_active" = '1' ] && [ "$state" = 'waiting' ]; then
+		title_style='bold_color'
+	elif [ "$window_active" = '1' ]; then
+		title_style='bold'
 	elif [ "$state" = 'waiting' ]; then
-		render_color_start "$wait_color"
-	fi
-	printf '┌─%s' "$title_body"
-	render_repeat '─' "$pad"
-	if [ "$window_active" = '1' ] || [ "$state" = 'waiting' ]; then
-		render_reset
-	fi
-	printf '\n'
-
-	# Detail row.
-	if [ "$state" = 'waiting' ]; then
-		render_color_start "$wait_color"
-	fi
-	printf '│ %s\n' "$detail_text"
-	if [ "$state" = 'waiting' ]; then
-		render_reset
+		title_style='color'
 	fi
 
-	# Meta row.
-	if [ "$state" = 'waiting' ]; then
-		render_color_start "$wait_color"
-	fi
-	printf '│ %s\n' "$meta_text"
-	if [ "$state" = 'waiting' ]; then
-		render_reset
-	fi
+	row_style=''
+	[ "$state" = 'waiting' ] && row_style='color'
 
-	# Bottom border.
-	if [ "$state" = 'waiting' ]; then
-		render_color_start "$wait_color"
-	fi
-	printf '└'
-	render_repeat '─' $((width - 1))
-	if [ "$state" = 'waiting' ]; then
-		render_reset
-	fi
-	printf '\n'
+	title_pad=$(render_repeat "$_h" "$pad")
+	bottom_pad=$(render_repeat "$_h" $((width - 1)))
+
+	with_style "$title_style" "$wait_color" '%s%s %s %s\n' "$_tl" "$_h" "$title_body" "$title_pad"
+	with_style "$row_style" "$wait_color" '%s %s\n' "$_v" "$detail_text"
+	with_style "$row_style" "$wait_color" '%s %s\n' "$_v" "$meta_text"
+	with_style "$row_style" "$wait_color" '%s%s\n' "$_bl" "$bottom_pad"
 }
 
 render_rows() {
