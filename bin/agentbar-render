@@ -1,0 +1,37 @@
+#!/bin/sh
+set -eu
+
+AGENTBAR_LIB=$(CDPATH= cd -- "$(dirname -- "$0")/../lib" && pwd)
+. "$AGENTBAR_LIB/render.sh"
+
+sleep_interruptible() {
+    duration=$1
+    trap ':' USR1
+    sleep "$duration" &
+    sleep_pid=$!
+    wait "$sleep_pid" 2>/dev/null || true
+}
+
+redraw() {
+    width=$(tput cols 2>/dev/null || printf '32')
+    case "$width" in
+        ''|*[!0-9]*) width=32 ;;
+    esac
+
+    if tmux_line_dump=$(tmux list-windows -a -F '#{session_name}|#{window_id}|#{window_name}|#{window_active}|#{@ab_agent_state}|#{@ab_current_action}|#{@ab_branch}|#{@ab_cwd}|#{@ab_last_cmd}|#{@ab_progress}|#{@ab_progress_label}|#{@ab_unread}|#{@ab_last_notification}|#{@ab_status_phase}|#{@ab_status_phase__icon}|#{@ab_status_phase__color}' 2>/dev/null); then
+        :
+    else
+        tmux_line_dump=''
+    fi
+
+    nerd_fonts=$(tmux show-options -gvq -w @agentbar_nerd_fonts 2>/dev/null || printf 'off')
+    printf '\033[H\033[J'
+    printf '%s\n' "$tmux_line_dump" | render_rows "$width" "${FRAME_INDEX:-0}" "$nerd_fonts"
+}
+
+FRAME_INDEX=0
+while true; do
+    redraw
+    FRAME_INDEX=$((FRAME_INDEX + 1))
+    sleep_interruptible 0.5
+done

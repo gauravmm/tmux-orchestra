@@ -1,0 +1,267 @@
+#!/bin/sh
+set -eu
+
+AGENTBAR_LIB=$(CDPATH= cd -- "$(dirname -- "$0")/../lib" && pwd)
+. "$AGENTBAR_LIB/common.sh"
+
+usage() {
+    ab_usage "usage:
+  agentbar set-status <key> <value> [--icon GLYPH] [--color COLOR] [--window ID]
+  agentbar clear-status <key> [--window ID]
+  agentbar list-status [--window ID]
+  agentbar set-progress <float> [--label TEXT] [--window ID]
+  agentbar clear-progress [--window ID]
+  agentbar notify --title T [--body B] [--subtitle S] [--window ID]
+  agentbar set-state <running|waiting|done> [--action TEXT] [--window ID]
+  agentbar clear-state [--window ID]"
+}
+
+parse_target_flags() {
+    win=''
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            --window)
+                [ $# -ge 2 ] || usage
+                win=$2
+                shift 2
+                ;;
+            --)
+                shift
+                break
+                ;;
+            -*)
+                ab_usage "unknown flag: $1"
+                ;;
+            *)
+                break
+                ;;
+        esac
+    done
+    TARGET_WINDOW=$(resolve_window "$win") || exit $?
+    REMAINING_ARGS=$#
+    export TARGET_WINDOW REMAINING_ARGS
+    set -- "$@"
+    printf '%s\n' "$*"
+}
+
+cmd_set_status() {
+    [ $# -ge 2 ] || usage
+    key=$(sanitize_status_key "$1")
+    value=$2
+    shift 2
+    icon=''
+    color=''
+    win=''
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            --icon) [ $# -ge 2 ] || usage; icon=$2; shift 2 ;;
+            --color) [ $# -ge 2 ] || usage; color=$2; shift 2 ;;
+            --window) [ $# -ge 2 ] || usage; win=$2; shift 2 ;;
+            --) shift; break ;;
+            -*) ab_usage "unknown flag: $1" ;;
+            *) break ;;
+        esac
+    done
+    [ $# -eq 0 ] || usage
+
+    target=$(resolve_window "$win")
+    set_opt "$target" "@ab_status_$key" "$value" || ab_tmux_fail 'failed to write status option'
+    if [ -n "$icon" ]; then
+        set_opt "$target" "@ab_status_${key}__icon" "$icon" || ab_tmux_fail 'failed to write status icon'
+    else
+        clear_opt "$target" "@ab_status_${key}__icon" || ab_tmux_fail 'failed to clear status icon'
+    fi
+    if [ -n "$color" ]; then
+        set_opt "$target" "@ab_status_${key}__color" "$color" || ab_tmux_fail 'failed to write status color'
+    else
+        clear_opt "$target" "@ab_status_${key}__color" || ab_tmux_fail 'failed to clear status color'
+    fi
+}
+
+cmd_clear_status() {
+    [ $# -ge 1 ] || usage
+    key=$(sanitize_status_key "$1")
+    shift
+    win=''
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            --window) [ $# -ge 2 ] || usage; win=$2; shift 2 ;;
+            --) shift; break ;;
+            -*) ab_usage "unknown flag: $1" ;;
+            *) break ;;
+        esac
+    done
+    [ $# -eq 0 ] || usage
+
+    target=$(resolve_window "$win")
+    clear_opt "$target" "@ab_status_$key" || ab_tmux_fail 'failed to clear status'
+    clear_opt "$target" "@ab_status_${key}__icon" || ab_tmux_fail 'failed to clear status icon'
+    clear_opt "$target" "@ab_status_${key}__color" || ab_tmux_fail 'failed to clear status color'
+}
+
+cmd_list_status() {
+    win=''
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            --window) [ $# -ge 2 ] || usage; win=$2; shift 2 ;;
+            --) shift; break ;;
+            -*) ab_usage "unknown flag: $1" ;;
+            *) break ;;
+        esac
+    done
+    [ $# -eq 0 ] || usage
+
+    target=$(resolve_window "$win")
+    tmux show-options -w -t "$target" 2>/dev/null | awk '
+        $1 ~ /^@ab_status_/ && $1 !~ /__(icon|color)$/ {
+            key = $1
+            sub(/^@ab_status_/, "", key)
+            value = $2
+            sub(/^"/, "", value)
+            sub(/"$/, "", value)
+            print key "\t" value
+        }
+    ' || ab_tmux_fail 'failed to list status'
+}
+
+cmd_set_progress() {
+    [ $# -ge 1 ] || usage
+    progress=$1
+    shift
+    label=''
+    win=''
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            --label) [ $# -ge 2 ] || usage; label=$2; shift 2 ;;
+            --window) [ $# -ge 2 ] || usage; win=$2; shift 2 ;;
+            --) shift; break ;;
+            -*) ab_usage "unknown flag: $1" ;;
+            *) break ;;
+        esac
+    done
+    [ $# -eq 0 ] || usage
+
+    case "$progress" in
+        ''|*[!0-9.]*)
+            ab_usage 'progress must be a float between 0 and 1'
+            ;;
+    esac
+
+    target=$(resolve_window "$win")
+    set_opt "$target" '@ab_progress' "$progress" || ab_tmux_fail 'failed to write progress'
+    if [ -n "$label" ]; then
+        set_opt "$target" '@ab_progress_label' "$label" || ab_tmux_fail 'failed to write progress label'
+    else
+        clear_opt "$target" '@ab_progress_label' || ab_tmux_fail 'failed to clear progress label'
+    fi
+}
+
+cmd_clear_progress() {
+    win=''
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            --window) [ $# -ge 2 ] || usage; win=$2; shift 2 ;;
+            --) shift; break ;;
+            -*) ab_usage "unknown flag: $1" ;;
+            *) break ;;
+        esac
+    done
+    [ $# -eq 0 ] || usage
+
+    target=$(resolve_window "$win")
+    clear_opt "$target" '@ab_progress' || ab_tmux_fail 'failed to clear progress'
+    clear_opt "$target" '@ab_progress_label' || ab_tmux_fail 'failed to clear progress label'
+}
+
+cmd_notify() {
+    title=''
+    body=''
+    subtitle=''
+    win=''
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            --title) [ $# -ge 2 ] || usage; title=$2; shift 2 ;;
+            --body) [ $# -ge 2 ] || usage; body=$2; shift 2 ;;
+            --subtitle) [ $# -ge 2 ] || usage; subtitle=$2; shift 2 ;;
+            --window) [ $# -ge 2 ] || usage; win=$2; shift 2 ;;
+            --) shift; break ;;
+            -*) ab_usage "unknown flag: $1" ;;
+            *) break ;;
+        esac
+    done
+    [ $# -eq 0 ] || usage
+    [ -n "$title" ] || ab_usage 'notify requires --title'
+
+    target=$(resolve_window "$win")
+    summary=$title
+    [ -n "$subtitle" ] && summary="$summary — $subtitle"
+    [ -n "$body" ] && summary="$summary: $body"
+
+    set_opt "$target" '@ab_unread' '1' || ab_tmux_fail 'failed to mark unread'
+    set_opt "$target" '@ab_last_notification' "$summary" || ab_tmux_fail 'failed to record notification'
+    "$(ab_plugin_dir)/bin/agentbar-notify" --title "$title" --body "$body" --subtitle "$subtitle"
+}
+
+cmd_set_state() {
+    [ $# -ge 1 ] || usage
+    state=$1
+    shift
+    action=''
+    win=''
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            --action) [ $# -ge 2 ] || usage; action=$2; shift 2 ;;
+            --window) [ $# -ge 2 ] || usage; win=$2; shift 2 ;;
+            --) shift; break ;;
+            -*) ab_usage "unknown flag: $1" ;;
+            *) break ;;
+        esac
+    done
+    [ $# -eq 0 ] || usage
+
+    case "$state" in
+        running|waiting|done) ;;
+        *) ab_usage 'state must be running, waiting, or done' ;;
+    esac
+
+    target=$(resolve_window "$win")
+    set_opt "$target" '@ab_agent_state' "$state" || ab_tmux_fail 'failed to write agent state'
+    if [ -n "$action" ]; then
+        set_opt "$target" '@ab_current_action' "$action" || ab_tmux_fail 'failed to write current action'
+    elif [ "$state" = 'done' ]; then
+        clear_opt "$target" '@ab_current_action' || ab_tmux_fail 'failed to clear current action'
+    fi
+}
+
+cmd_clear_state() {
+    win=''
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            --window) [ $# -ge 2 ] || usage; win=$2; shift 2 ;;
+            --) shift; break ;;
+            -*) ab_usage "unknown flag: $1" ;;
+            *) break ;;
+        esac
+    done
+    [ $# -eq 0 ] || usage
+
+    target=$(resolve_window "$win")
+    clear_opt "$target" '@ab_agent_state' || ab_tmux_fail 'failed to clear agent state'
+    clear_opt "$target" '@ab_current_action' || ab_tmux_fail 'failed to clear current action'
+}
+
+[ $# -gt 0 ] || usage
+subcommand=$1
+shift
+
+case "$subcommand" in
+    set-status) cmd_set_status "$@" ;;
+    clear-status) cmd_clear_status "$@" ;;
+    list-status) cmd_list_status "$@" ;;
+    set-progress) cmd_set_progress "$@" ;;
+    clear-progress) cmd_clear_progress "$@" ;;
+    notify) cmd_notify "$@" ;;
+    set-state) cmd_set_state "$@" ;;
+    clear-state) cmd_clear_state "$@" ;;
+    *) usage ;;
+esac

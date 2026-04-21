@@ -1,0 +1,25 @@
+#!/bin/sh
+set -eu
+
+AGENTBAR_LIB=$(CDPATH= cd -- "$(dirname -- "$0")/../lib" && pwd)
+. "$AGENTBAR_LIB/notify.sh"
+
+title=''
+body=''
+subtitle=''
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --title) [ $# -ge 2 ] || exit 1; title=$2; shift 2 ;;
+        --body) [ $# -ge 2 ] || exit 1; body=$2; shift 2 ;;
+        --subtitle) [ $# -ge 2 ] || exit 1; subtitle=$2; shift 2 ;;
+        --) shift; break ;;
+        -*) printf 'unknown flag: %s\n' "$1" >&2; exit 1 ;;
+        *) break ;;
+    esac
+done
+
+[ -n "$title" ] || { printf 'notify requires --title\n' >&2; exit 1; }
+[ $# -eq 0 ] || { printf 'unexpected positional args\n' >&2; exit 1; }
+
+agentbar_notify_dispatch "$title" "$body" "$subtitle"
