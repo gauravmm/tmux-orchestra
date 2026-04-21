@@ -7,4 +7,4 @@ test: shellcheck
 	./tests/test_render.sh
 
 shellcheck:
-	shellcheck -s sh agentbar.tmux bin/* lib/* tests/*.sh
+	shellcheck -x -s sh agentbar.tmux bin/* lib/* tests/*.sh

@@ -33,6 +33,7 @@ agentbar_notify_wsl() {
 agentbar_notify_powershell() {
     title=$1
     body=$2
+    # shellcheck disable=SC2016
     AGENTBAR_NOTIFY_TITLE=$title AGENTBAR_NOTIFY_BODY=$body \
         powershell.exe -NoProfile -Command \
         '[string]$title=$env:AGENTBAR_NOTIFY_TITLE; [string]$body=$env:AGENTBAR_NOTIFY_BODY; if (Get-Command New-BurntToastNotification -ErrorAction SilentlyContinue) { New-BurntToastNotification -Text $title, $body | Out-Null }'

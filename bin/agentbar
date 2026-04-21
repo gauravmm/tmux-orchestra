@@ -1,7 +1,8 @@
 #!/bin/sh
 set -eu
 
-AGENTBAR_LIB=$(CDPATH= cd -- "$(dirname -- "$0")/../lib" && pwd)
+AGENTBAR_LIB=$(CDPATH='' cd -- "$(dirname -- "$0")/../lib" && pwd)
+# shellcheck disable=SC1091
 . "$AGENTBAR_LIB/common.sh"
 
 usage() {

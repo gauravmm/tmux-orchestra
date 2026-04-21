@@ -25,7 +25,7 @@ ab_tmux_fail() {
 }
 
 ab_plugin_dir() {
-    CDPATH= cd -- "$(dirname -- "$0")/.." && pwd
+    CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd
 }
 
 ab_option_max() {

@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-REPO_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+REPO_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 TMP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/agentbar-cli.XXXXXX")
 SOCKET=agentbar-test
 
@@ -49,7 +49,7 @@ assert_eq 'Compile' "$(tmux show-options -v -w -t "$window_id" @ab_progress_labe
 agentbar clear-progress --window "$window_id"
 assert_eq '' "$(tmux show-options -v -w -t "$window_id" @ab_progress 2>/dev/null || printf '')" 'progress is cleared'
 
-AGENTBAR_NOTIFIER="$TMP_DIR/notifier" cat >"$TMP_DIR/notifier" <<'EOF'
+cat >"$TMP_DIR/notifier" <<'EOF'
 #!/bin/sh
 printf '%s|%s|%s\n' "$1" "$2" "$3" >"__OUTPUT__"
 EOF
@@ -64,7 +64,7 @@ assert_eq 'Build|done|CI' "$(cat "$TMP_DIR/notifier.out")" 'notify calls notifie
 agentbar set-state running --action 'pytest' --window "$window_id"
 assert_eq 'running' "$(tmux show-options -v -w -t "$window_id" @ab_agent_state)" 'state is written'
 assert_eq 'pytest' "$(tmux show-options -v -w -t "$window_id" @ab_current_action)" 'action is written'
-agentbar set-state done --window "$window_id"
+agentbar set-state 'done' --window "$window_id"
 assert_eq 'done' "$(tmux show-options -v -w -t "$window_id" @ab_agent_state)" 'done state is written'
 assert_eq '' "$(tmux show-options -v -w -t "$window_id" @ab_current_action 2>/dev/null || printf '')" 'done clears action'
 agentbar clear-state --window "$window_id"
