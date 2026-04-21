@@ -5,6 +5,7 @@ set -eu
 # works no matter how tmux sources this file.
 CURRENT_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
 
+tmux set-option -gq focus-events on
 tmux set-option -gq @orchestra_nerd_fonts off
 tmux set-option -gq @orchestra_key B
 tmux set-option -gq @orchestra_width 32
@@ -27,7 +28,7 @@ notify_renderer='pid=$(tmux show-option -gvq -t "#{session_name}" @ab_sidebar_pi
 # Keep discovery env vars fresh and clear unread state when the user returns to
 # a window. The hook also nudges the renderer so the unread marker disappears
 # immediately instead of waiting for the next poll tick.
-tmux set-hook -g pane-focus-in "run-shell 'tmux set-option -wq -t \"#{window_id}\" @ab_unread \"\" >/dev/null 2>&1 || true; tmux set-environment -t \"#{session_name}\" ORCHESTRA_WINDOW_ID \"#{window_id}\"; tmux set-environment -t \"#{session_name}\" ORCHESTRA_PANE_ID \"#{pane_id}\"; $notify_renderer'"
+tmux set-hook -g pane-focus-in "run-shell 'tmux set-option -wq -t \"#{window_id}\" @ab_unread \"\" >/dev/null 2>&1 || true; tmux set-environment -t \"#{session_name}\" ORCHESTRA_WINDOW_ID \"#{window_id}\"; tmux set-environment -t \"#{session_name}\" ORCHESTRA_PANE_ID \"#{pane_id}\"; $notify_renderer; \"$CURRENT_DIR/bin/orchestra-follow\"'"
 tmux set-hook -g window-renamed "run-shell '$notify_renderer'"
 tmux set-hook -g client-session-changed "run-shell '$notify_renderer'"
 # shellcheck disable=SC1083,SC2154

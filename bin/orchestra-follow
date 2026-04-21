@@ -1,0 +1,36 @@
+#!/bin/sh
+set -eu
+
+ORCHESTRA_LIB=$(CDPATH='' cd -- "$(dirname -- "$0")/../lib" && pwd)
+# shellcheck disable=SC1091
+. "$ORCHESTRA_LIB/common.sh"
+
+# Get the window that just received focus.
+current_window=$(tmux display-message -p '#{window_id}' 2>/dev/null) || exit 0
+
+session_name=$(resolve_session "$current_window") || ab_tmux_fail 'failed to resolve session'
+
+sidebar_pane=$(get_session_opt "$session_name" '@ab_sidebar_pane_id')
+[ -n "$sidebar_pane" ] || exit 0
+
+# Which window currently hosts the sidebar?
+sidebar_window=$(tmux display-message -p -t "$sidebar_pane" '#{window_id}' 2>/dev/null) || exit 0
+
+# Already here — nothing to do.
+[ "$sidebar_window" != "$current_window" ] || exit 0
+
+# Target the active pane in the current window.
+target_pane=$(tmux display-message -p -t "$current_window" '#{pane_id}' 2>/dev/null) || exit 0
+
+# Determine width.
+width=$(get_session_opt "$session_name" '@ab_width')
+if [ -z "$width" ]; then
+    width=$(tmux show-options -gvq @orchestra_width 2>/dev/null || printf '32')
+fi
+case "$width" in
+    ''|*[!0-9]*) width=32 ;;
+esac
+
+# Move the sidebar pane to the left of the active pane in the current window.
+# If the source window contained only this pane, tmux closes that window.
+tmux move-pane -hb -l "$width" -s "$sidebar_pane" -t "$target_pane" >/dev/null 2>&1 || true
