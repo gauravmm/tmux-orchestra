@@ -1,9 +1,9 @@
 #!/bin/sh
 set -eu
 
-AGENTBAR_LIB=$(CDPATH='' cd -- "$(dirname -- "$0")/../lib" && pwd)
+ORCHESTRA_LIB=$(CDPATH='' cd -- "$(dirname -- "$0")/../lib" && pwd)
 # shellcheck disable=SC1091
-. "$AGENTBAR_LIB/render.sh"
+. "$ORCHESTRA_LIB/render.sh"
 
 sleep_interruptible() {
     duration=$1
@@ -25,7 +25,7 @@ redraw() {
         tmux_line_dump=''
     fi
 
-    nerd_fonts=$(tmux show-options -gvq -w @agentbar_nerd_fonts 2>/dev/null || printf 'off')
+    nerd_fonts=$(tmux show-options -gvq -w @orchestra_nerd_fonts 2>/dev/null || printf 'off')
     printf '\033[H\033[J'
     printf '%s\n' "$tmux_line_dump" | render_rows "$width" "${FRAME_INDEX:-0}" "$nerd_fonts"
 }

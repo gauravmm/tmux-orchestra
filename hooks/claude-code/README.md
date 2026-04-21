@@ -1,7 +1,7 @@
 # Claude Code hook template
 
 Merge `settings.json` into `~/.claude/settings.json` to map Claude Code hook
-events onto `agentbar` status updates.
+events onto `orchestra` status updates.
 
 ## Note about jq
 

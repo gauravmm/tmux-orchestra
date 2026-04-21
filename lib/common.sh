@@ -121,8 +121,8 @@ resolve_window() {
         return 0
     fi
 
-    if [ -n "${AGENTBAR_WINDOW_ID:-}" ]; then
-        printf '%s\n' "$AGENTBAR_WINDOW_ID"
+    if [ -n "${ORCHESTRA_WINDOW_ID:-}" ]; then
+        printf '%s\n' "$ORCHESTRA_WINDOW_ID"
         return 0
     fi
 

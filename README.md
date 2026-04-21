@@ -1,14 +1,14 @@
 # tmux-orchestra
 
-`tmux-orchestra` is a pure POSIX shell tmux plugin that exposes the `agentbar`
+`tmux-orchestra` is a pure POSIX shell tmux plugin that exposes the `orchestra`
 CLI for agent status, notifications, and prompt-published context, then renders
 that state in a dedicated sidebar pane.
 
 ## Highlights
 
-- TPM-installable plugin entrypoint via `agentbar.tmux`
-- `agentbar` CLI for status pills, progress, notifications, and agent state
-- Long-lived `agentbar-render` sidebar pane
+- TPM-installable plugin entrypoint via `orchestra.tmux`
+- `orchestra` CLI for status pills, progress, notifications, and agent state
+- Long-lived `orchestra-render` sidebar pane
 - Bash and zsh prompt hooks for cwd / branch / last command
 - Claude Code hook template plus stub templates for Codex and OpenCode
 - Shellcheck-clean shell implementation with tests under `make test`
@@ -29,11 +29,11 @@ that state in a dedicated sidebar pane.
 ## CLI quick start
 
 ```sh
-agentbar set-status phase build --icon '*' --color cyan
-agentbar set-progress 0.42 --label 'Tests'
-agentbar set-state running --action 'pytest'
-agentbar notify --title 'Build' --body 'done'
-agentbar clear-state
+orchestra set-status phase build --icon '*' --color cyan
+orchestra set-progress 0.42 --label 'Tests'
+orchestra set-state running --action 'pytest'
+orchestra notify --title 'Build' --body 'done'
+orchestra clear-state
 ```
 
 ## Prompt hooks

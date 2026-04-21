@@ -1,9 +1,9 @@
 #!/bin/sh
 set -eu
 
-AGENTBAR_LIB=$(CDPATH='' cd -- "$(dirname -- "$0")/../lib" && pwd)
+ORCHESTRA_LIB=$(CDPATH='' cd -- "$(dirname -- "$0")/../lib" && pwd)
 # shellcheck disable=SC1091
-. "$AGENTBAR_LIB/notify.sh"
+. "$ORCHESTRA_LIB/notify.sh"
 
 title=''
 body=''
@@ -23,4 +23,4 @@ done
 [ -n "$title" ] || { printf 'notify requires --title\n' >&2; exit 1; }
 [ $# -eq 0 ] || { printf 'unexpected positional args\n' >&2; exit 1; }
 
-agentbar_notify_dispatch "$title" "$body" "$subtitle"
+orchestra_notify_dispatch "$title" "$body" "$subtitle"

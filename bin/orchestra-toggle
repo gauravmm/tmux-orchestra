@@ -1,9 +1,9 @@
 #!/bin/sh
 set -eu
 
-AGENTBAR_LIB=$(CDPATH='' cd -- "$(dirname -- "$0")/../lib" && pwd)
+ORCHESTRA_LIB=$(CDPATH='' cd -- "$(dirname -- "$0")/../lib" && pwd)
 # shellcheck disable=SC1091
-. "$AGENTBAR_LIB/common.sh"
+. "$ORCHESTRA_LIB/common.sh"
 
 plugin_dir=$(ab_plugin_dir)
 current_window=$(resolve_window '')
@@ -19,13 +19,13 @@ fi
 
 width=$(get_session_opt "$session_name" '@ab_width')
 if [ -z "$width" ]; then
-    width=$(tmux show-options -gvq @agentbar_width 2>/dev/null || printf '32')
+    width=$(tmux show-options -gvq @orchestra_width 2>/dev/null || printf '32')
 fi
 case "$width" in
     ''|*[!0-9]*) width=32 ;;
 esac
 
-pane_info=$(tmux split-window -bhd -l "$width" -t '{start}' -c "$PWD" -P -F '#{pane_id}|#{pane_pid}' "exec \"$plugin_dir/bin/agentbar-render\"") || ab_tmux_fail 'failed to open sidebar'
+pane_info=$(tmux split-window -bhd -l "$width" -t '{start}' -c "$PWD" -P -F '#{pane_id}|#{pane_pid}' "exec \"$plugin_dir/bin/orchestra-render\"") || ab_tmux_fail 'failed to open sidebar'
 new_pane=$(printf '%s' "$pane_info" | awk -F'|' 'NR==1 { print $1 }')
 new_pid=$(printf '%s' "$pane_info" | awk -F'|' 'NR==1 { print $2 }')
 

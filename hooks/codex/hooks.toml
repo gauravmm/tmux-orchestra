@@ -1,2 +1,2 @@
-# TODO: wire Codex hook events to `agentbar set-state` and `agentbar notify`.
+# TODO: wire Codex hook events to `orchestra set-state` and `orchestra notify`.
 # See hooks/codex/README.md for the intended mapping.
