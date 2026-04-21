@@ -1,12 +1,34 @@
 # OpenCode hook template
 
-This repository ships a documented stub for v0.1.
+Drop-in plugin for [OpenCode](https://opencode.ai/) that maps agent events to `orchestra` status updates.
 
-Planned mapping:
+## Installation
 
-- `on_tool_call` → `orchestra set-state running --action "..."`
-- response / user-input wait → `orchestra set-state waiting --action "..."`
-- final response / stop → `orchestra set-state done && orchestra clear-state`
+Copy `orchestra.js` into your OpenCode plugins directory:
 
-Fill in the concrete JSON schema from the OpenCode hook docs when promoting the
-stub to a working template in a later release.
+```sh
+# Global (applies to all projects)
+cp hooks/opencode/orchestra.js ~/.config/opencode/plugins/
+
+# Or project-local
+mkdir -p .opencode/plugins
+cp hooks/opencode/orchestra.js .opencode/plugins/
+```
+
+Restart OpenCode. The plugin auto-loads from `.opencode/plugins/` — no config changes needed.
+
+## Event mapping
+
+| OpenCode event | Orchestra state | Action |
+|---|---|---|
+| `tool.execute.before` | `running` | Tool name |
+| `tool.execute.after` | `done` (when last tool finishes) | — |
+| `permission.ask` | `waiting` | Permission title |
+| `session.idle` | `done` | — |
+
+A pending-tool counter prevents flicker when OpenCode chains multiple tools in sequence.
+
+## Notes
+
+- The plugin calls `orchestra` via Bun's shell API. Ensure `orchestra` is on your `PATH` (set automatically by `orchestra.tmux` for new panes).
+- All `orchestra` calls use `.nothrow()` so a missing binary or tmux disconnect won't crash OpenCode.

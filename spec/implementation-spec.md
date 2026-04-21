@@ -35,6 +35,7 @@ tmux-orchestra/
 │   │   ├── hooks.toml
 │   │   └── README.md
 │   └── opencode/
+│       ├── orchestra.js           # OpenCode plugin (auto-load from .opencode/plugins/)
 │       ├── config.json
 │       └── README.md
 └── tests/
@@ -282,13 +283,19 @@ Drop-in snippet users merge into `~/.claude/settings.json`:
 
 ### Codex (`hooks/codex/hooks.toml`)
 
-Maps Codex's `on_tool_start` / `on_tool_end` / `on_turn_end` to the same three `orchestra` calls.
+Maps Codex's `on_tool_start` / `on_tool_end` / `on_turn_end` to the same three `orchestra` calls. Stub for v0.1 — Codex hook docs are still stabilising.
 
-### OpenCode (`hooks/opencode/config.json`)
+### OpenCode (`hooks/opencode/orchestra.js`)
 
-Maps `on_tool_call` / `on_response` equivalently.
+Working plugin for OpenCode (v0.2). Copy `orchestra.js` to `.opencode/plugins/` — it auto-loads on restart.
 
-For v0.1, the Codex and OpenCode templates can be stubs with a TODO pointing at each harness's docs — Claude Code is the only one that must ship working. Document this clearly in each `README.md`.
+Hooks:
+- `tool.execute.before` → `orchestra set-state running --action <tool>`
+- `tool.execute.after` → `orchestra set-state done && orchestra clear-state` (only when the last pending tool finishes; a counter prevents flicker during multi-tool chains)
+- `permission.ask` → `orchestra set-state waiting --action <permission_title>`
+- `event` (`session.idle`) → `orchestra set-state done && orchestra clear-state`
+
+All shell calls use `.nothrow()` so a missing `orchestra` binary won't crash OpenCode.
 
 ## 10. Sidebar toggle (`bin/orchestra-toggle`)
 
