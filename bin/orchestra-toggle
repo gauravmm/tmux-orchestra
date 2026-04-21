@@ -29,6 +29,8 @@ pane_info=$(tmux split-window -bhd -l "$width" -t "$current_window" -c "$PWD" -P
 new_pane=$(printf '%s' "$pane_info" | awk -F'|' 'NR==1 { print $1 }')
 new_pid=$(printf '%s' "$pane_info" | awk -F'|' 'NR==1 { print $2 }')
 
+tmux set-option -pt "$new_pane" pane-border-status off >/dev/null 2>&1 || true
+
 set_session_opt "$session_name" '@ab_sidebar_pane_id' "$new_pane" || ab_tmux_fail 'failed to store sidebar pane id'
 set_session_opt "$session_name" '@ab_sidebar_pid' "$new_pid" || ab_tmux_fail 'failed to store sidebar pid'
 set_session_opt "$session_name" '@ab_width' "$width" || ab_tmux_fail 'failed to store sidebar width'
