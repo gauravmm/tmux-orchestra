@@ -34,3 +34,6 @@ esac
 # Move the sidebar pane to the left of the active pane in the current window.
 # If the source window contained only this pane, tmux closes that window.
 tmux move-pane -hb -l "$width" -s "$sidebar_pane" -t "$target_pane" >/dev/null 2>&1 || true
+
+# Return focus to the main content pane, not the sidebar.
+tmux select-pane -t "$target_pane" >/dev/null 2>&1 || true
