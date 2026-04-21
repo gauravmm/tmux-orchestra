@@ -26,9 +26,13 @@ redraw() {
     fi
 
     nerd_fonts=$(tmux show-options -gvq -w @orchestra_nerd_fonts 2>/dev/null || printf 'off')
-    printf '\033[H\033[J'
+    printf '\033[H'
     printf '%s\n' "$tmux_line_dump" | render_rows "$width" "${FRAME_INDEX:-0}" "$nerd_fonts"
+    printf '\033[J'
 }
+
+trap 'printf "\033[?1049l"' EXIT
+printf '\033[?1049h'
 
 FRAME_INDEX=0
 while true; do
