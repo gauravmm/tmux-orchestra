@@ -94,7 +94,7 @@ orchestra set-state <running|waiting|done> [--action TEXT] [--window ID]
 orchestra clear-state [--window ID]
 ```
 
-`set-state` is sugar for `set-option @ab_agent_state` + optional `@ab_current_action`. It exists so harness templates are one-liners.
+`set-state` is sugar for `set-option @ab_agent_state` + optional `@ab_current_action`. It exists so harness templates are one-liners. When `--action` is omitted, the previous action is cleared (the sidebar shows a bare state glyph).
 
 **Argument parsing.** POSIX-compatible hand-rolled parser (no `getopts` long options). Template:
 

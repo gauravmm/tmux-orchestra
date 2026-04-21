@@ -229,7 +229,7 @@ cmd_set_state() {
     set_opt "$target" '@ab_agent_state' "$state" || ab_tmux_fail 'failed to write agent state'
     if [ -n "$action" ]; then
         set_opt "$target" '@ab_current_action' "$action" || ab_tmux_fail 'failed to write current action'
-    elif [ "$state" = 'done' ]; then
+    else
         clear_opt "$target" '@ab_current_action' || ab_tmux_fail 'failed to clear current action'
     fi
 }
