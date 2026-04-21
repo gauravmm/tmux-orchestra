@@ -7,6 +7,7 @@ CURRENT_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
 
 tmux set-option -gq focus-events on
 tmux set-option -gq @orchestra_nerd_fonts off
+tmux set-option -gq @orchestra_wait_color '#d29922'
 tmux set-option -gq @orchestra_key B
 tmux set-option -gq @orchestra_width 32
 
