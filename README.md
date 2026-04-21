@@ -8,23 +8,95 @@ that state in a dedicated sidebar pane.
 
 - TPM-installable plugin entrypoint via `orchestra.tmux`
 - `orchestra` CLI for status pills, progress, notifications, and agent state
-- Long-lived `orchestra-render` sidebar pane
-- Bash and zsh prompt hooks for cwd / branch / last command
-- Claude Code hook template plus stub templates for Codex and OpenCode
+- Long-lived `orchestra-render` sidebar pane that follows focus across windows
+- Bash and zsh prompt hooks for `cwd` / `branch` / last command
+- Claude Code hook template (working), OpenCode plugin (working), Codex stub
 - Shellcheck-clean shell implementation with tests under `make test`
+
+## Prerequisites
+
+- **tmux ≥ 3.4** (required for `focus-events` and modern pane targeting)
+- **TPM** ([tmux-plugin-manager](https://github.com/tmux-plugins/tpm)) for one-line install
+
+Check your tmux version:
+
+```sh
+tmux -V
+```
+
+If you don't have TPM, install it first:
+
+```sh
+git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
+```
+
+Then add this to your `~/.tmux.conf` if it's not already there:
+
+```tmux
+run '~/.tmux/plugins/tpm/tpm'
+```
 
 ## Installation
 
-1. Clone this repository into `~/.tmux/plugins/tmux-orchestra`.
-2. Add the plugin to `.tmux.conf`:
+1. Add the plugin to `~/.tmux.conf`:
 
    ```tmux
    set -g @plugin 'gauravmm/tmux-orchestra'
    run '~/.tmux/plugins/tpm/tpm'
    ```
 
-3. Reload tmux, then install plugins with `prefix + I`.
+2. Reload tmux config:
+
+   ```sh
+   tmux source-file ~/.tmux.conf
+   ```
+
+3. Install the plugin with `prefix + I` (capital i).
 4. Toggle the sidebar with `prefix + B`.
+
+## Prompt hooks
+
+Source one of the prompt hooks from your shell startup file so the sidebar
+shows cwd, git branch, and last command:
+
+```sh
+. ~/.tmux/plugins/tmux-orchestra/hooks/prompt.bash
+# or
+. ~/.tmux/plugins/tmux-orchestra/hooks/prompt.zsh
+```
+
+## Agent harness templates
+
+Agent harnesses wire IDE/agent events (tool calls, permission prompts, idle)
+to `orchestra` status updates so the sidebar shows what the agent is doing
+in real time.
+
+### Claude Code
+
+Merge `settings.json` into `~/.claude/settings.json`:
+
+```sh
+# Backup first
+cp ~/.claude/settings.json ~/.claude/settings.json.bak
+# Merge (manual — review the diff)
+```
+
+Requires `jq` for JSON hook parsing.
+
+### OpenCode
+
+Copy the plugin to OpenCode's global plugins directory:
+
+```sh
+mkdir -p ~/.config/opencode/plugins
+cp ~/.tmux/plugins/tmux-orchestra/hooks/opencode/orchestra.js ~/.config/opencode/plugins/
+```
+
+Restart OpenCode. The plugin auto-loads — no config changes needed.
+
+### Codex
+
+Stub template. See `hooks/codex/README.md` for the intended event mapping.
 
 ## CLI quick start
 
@@ -35,22 +107,6 @@ orchestra set-state running --action 'pytest'
 orchestra notify --title 'Build' --body 'done'
 orchestra clear-state
 ```
-
-## Prompt hooks
-
-Source one of the prompt hooks from your shell startup file:
-
-```sh
-. ~/.tmux/plugins/tmux-orchestra/hooks/prompt.bash
-# or
-. ~/.tmux/plugins/tmux-orchestra/hooks/prompt.zsh
-```
-
-## Agent harness templates
-
-- Claude Code: `hooks/claude-code/`
-- Codex: `hooks/codex/`
-- OpenCode: `hooks/opencode/`
 
 ## Testing
 
