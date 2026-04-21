@@ -1,4 +1,4 @@
-# Shared helpers for tmux-agentbar. This file is sourced by executables, so it
+# Shared helpers for tmux-orchestra. This file is sourced by executables, so it
 # intentionally avoids `set -e` and only exposes reusable functions.
 
 AB_EXIT_USAGE=1

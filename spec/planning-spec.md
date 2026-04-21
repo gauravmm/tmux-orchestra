@@ -47,7 +47,7 @@ A few cmux features intentionally **out of scope** for the tmux port: the embedd
 
 - It runs `tree` once and doesn't update. We need a long-lived renderer process.
 - It's a single sidebar; we want per-window state aggregated.
-- Its directory-tree purpose is orthogonal — `tmux-agentbar` could even coexist with it, bound to a different key.
+- Its directory-tree purpose is orthogonal — `tmux-orchestra` could even coexist with it, bound to a different key.
 
 **Recommendation:** Don't fork. Borrow the toggle pattern as a small shell module and build the renderer fresh.
 
@@ -55,7 +55,7 @@ A few cmux features intentionally **out of scope** for the tmux port: the embedd
 
 ### Components
 
-1. **`tmux-agentbar` plugin** — TPM-installable. `agentbar.tmux` registers key bindings, default options, and `set-hook`s.
+1. **`tmux-orchestra` plugin** — TPM-installable. `agentbar.tmux` registers key bindings, default options, and `set-hook`s.
 2. **`agentbar` CLI** — POSIX-shell wrapper around `tmux set-option`, `tmux show-options`, `tmux display-message`. Single script.
 3. **`agentbar-render`** — long-lived TUI living in the sidebar pane. Reads tmux state and redraws.
 4. **Notification dispatcher** — `agentbar-notify` shim that detects OS and calls the right notifier.
@@ -212,5 +212,5 @@ Hard requirements: tmux ≥ 3.2 (for `display-popup`, modern format expansions, 
 
 ## 9. Naming and licensing
 
-- Suggested name: **`tmux-agentbar`** (emphasises the agent-status-bar purpose, avoids confusion with the directory-listing `tmux-sidebar`).
+- Product name: **`tmux-orchestra`**.
 - License: MIT

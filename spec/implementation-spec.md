@@ -1,4 +1,4 @@
-# Implementation Spec: `tmux-agentbar` v0.1.0
+# Implementation Spec: `tmux-orchestra` v0.1.0
 
 This is a concrete hand-off spec. Design rationale and tradeoffs live in [planning-spec.md](planning-spec.md); don't re-litigate those decisions here — implement what's below.
 
@@ -7,12 +7,12 @@ This is a concrete hand-off spec. Design rationale and tradeoffs live in [planni
 - **POSIX shell only.** No Rust, Go, Python, or Node. Every executable in this repo is a `#!/bin/sh` script that passes `shellcheck -s sh`.
 - **No external runtime deps** beyond tmux ≥ 3.2 and the platform notifier binary. Specifically: no `jq`, no `bash`-only features, no GNU-only flags (`sed -i` without arg, `grep -P`, `readlink -f`, etc.).
 - **tmux is the only state store.** No files under `$XDG_RUNTIME_DIR`, no SQLite, no sockets beyond tmux's own.
-- **TPM-installable.** User clones the repo into `~/.tmux/plugins/tmux-agentbar`, adds one line to `.tmux.conf`, reloads — done.
+- **TPM-installable.** User clones the repo into `~/.tmux/plugins/tmux-orchestra`, adds one line to `.tmux.conf`, reloads — done.
 
 ## 1. Repository layout
 
 ```
-tmux-agentbar/
+tmux-orchestra/
 ├── agentbar.tmux                 # TPM entrypoint. Sourced by tmux.
 ├── README.md
 ├── LICENSE                       # MIT
@@ -339,7 +339,7 @@ Explicit list to prevent scope creep; each is parked in planning-spec.md §8 v0.
 
 ## 14. Definition of done
 
-- `git clone` into `~/.tmux/plugins/tmux-agentbar`, add `set -g @plugin 'gauravmm/tmux-agentbar'` (or equivalent path) to `.tmux.conf`, `prefix + I` (TPM install), `prefix + B` opens a sidebar pane.
+- `git clone` into `~/.tmux/plugins/tmux-orchestra`, add `set -g @plugin 'gauravmm/tmux-orchestra'` (or equivalent path) to `.tmux.conf`, `prefix + I` (TPM install), `prefix + B` opens a sidebar pane.
 - In a second pane, `agentbar set-status phase build --icon '*' --color cyan` — the sidebar row for that window shows a cyan `* build` pill within 500 ms.
 - `agentbar set-state running --action "Bash: pytest"` — sidebar shows spinning glyph + action text.
 - `agentbar notify --title "Build" --body "done"` — desktop toast fires, pane border marked unread, focus-in clears it.

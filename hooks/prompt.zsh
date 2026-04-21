@@ -1,4 +1,4 @@
-# Safe-to-source zsh prompt publisher for tmux-agentbar.
+# Safe-to-source zsh prompt publisher for tmux-orchestra.
 
 if [ -z "${_AGENTBAR_PROMPT_ZSH_LOADED:-}" ]; then
     _AGENTBAR_PROMPT_ZSH_LOADED=1

@@ -1,4 +1,4 @@
-# Safe-to-source bash prompt publisher for tmux-agentbar.
+# Safe-to-source bash prompt publisher for tmux-orchestra.
 
 if [ -z "${_AGENTBAR_PROMPT_BASH_LOADED:-}" ]; then
     _AGENTBAR_PROMPT_BASH_LOADED=1

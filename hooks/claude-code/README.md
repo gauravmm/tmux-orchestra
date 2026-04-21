@@ -6,5 +6,5 @@ events onto `agentbar` status updates.
 ## Note about jq
 
 The template uses `jq` because Claude Code provides structured JSON hook input.
-`tmux-agentbar` itself does **not** depend on `jq`; only this optional hook
+`tmux-orchestra` itself does **not** depend on `jq`; only this optional hook
 template does.

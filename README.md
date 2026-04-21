@@ -1,8 +1,8 @@
-# tmux-agentbar
+# tmux-orchestra
 
-`tmux-agentbar` is a pure POSIX shell tmux plugin that exposes a small CLI for
-agent status, notifications, and prompt-published context, then renders that
-state in a dedicated sidebar pane.
+`tmux-orchestra` is a pure POSIX shell tmux plugin that exposes the `agentbar`
+CLI for agent status, notifications, and prompt-published context, then renders
+that state in a dedicated sidebar pane.
 
 ## Highlights
 
@@ -15,11 +15,11 @@ state in a dedicated sidebar pane.
 
 ## Installation
 
-1. Clone this repository into `~/.tmux/plugins/tmux-agentbar`.
+1. Clone this repository into `~/.tmux/plugins/tmux-orchestra`.
 2. Add the plugin to `.tmux.conf`:
 
    ```tmux
-   set -g @plugin 'gauravmm/tmux-agentbar'
+   set -g @plugin 'gauravmm/tmux-orchestra'
    run '~/.tmux/plugins/tpm/tpm'
    ```
 
@@ -41,9 +41,9 @@ agentbar clear-state
 Source one of the prompt hooks from your shell startup file:
 
 ```sh
-. ~/.tmux/plugins/tmux-agentbar/hooks/prompt.bash
+. ~/.tmux/plugins/tmux-orchestra/hooks/prompt.bash
 # or
-. ~/.tmux/plugins/tmux-agentbar/hooks/prompt.zsh
+. ~/.tmux/plugins/tmux-orchestra/hooks/prompt.zsh
 ```
 
 ## Agent harness templates
