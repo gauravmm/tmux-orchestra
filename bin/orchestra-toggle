@@ -1,0 +1,36 @@
+#!/bin/sh
+set -eu
+
+ORCHESTRA_LIB=$(CDPATH='' cd -- "$(dirname -- "$0")/../lib" && pwd)
+# shellcheck disable=SC1091
+. "$ORCHESTRA_LIB/common.sh"
+
+plugin_dir=$(ab_plugin_dir)
+current_window=$(resolve_window '')
+session_name=$(resolve_session "$current_window") || ab_tmux_fail 'failed to resolve session'
+
+sidebar_pane=$(get_session_opt "$session_name" '@ab_sidebar_pane_id')
+if [ -n "$sidebar_pane" ] && pane_exists "$sidebar_pane"; then
+    tmux kill-pane -t "$sidebar_pane" >/dev/null 2>&1 || ab_tmux_fail 'failed to close sidebar'
+    clear_session_opt "$session_name" '@ab_sidebar_pane_id' || ab_tmux_fail 'failed to clear sidebar pane id'
+    clear_session_opt "$session_name" '@ab_sidebar_pid' || ab_tmux_fail 'failed to clear sidebar pid'
+    exit 0
+fi
+
+width=$(get_session_opt "$session_name" '@ab_width')
+if [ -z "$width" ]; then
+    width=$(tmux show-options -gvq @orchestra_width 2>/dev/null || printf '32')
+fi
+case "$width" in
+    ''|*[!0-9]*) width=32 ;;
+esac
+
+pane_info=$(tmux split-window -bhd -l "$width" -t "$current_window" -c "$PWD" -P -F '#{pane_id}|#{pane_pid}' "exec \"$plugin_dir/bin/orchestra-render\"") || ab_tmux_fail 'failed to open sidebar'
+new_pane=$(printf '%s' "$pane_info" | awk -F'|' 'NR==1 { print $1 }')
+new_pid=$(printf '%s' "$pane_info" | awk -F'|' 'NR==1 { print $2 }')
+
+tmux set-option -pt "$new_pane" pane-border-status off >/dev/null 2>&1 || true
+
+set_session_opt "$session_name" '@ab_sidebar_pane_id' "$new_pane" || ab_tmux_fail 'failed to store sidebar pane id'
+set_session_opt "$session_name" '@ab_sidebar_pid' "$new_pid" || ab_tmux_fail 'failed to store sidebar pid'
+set_session_opt "$session_name" '@ab_width' "$width" || ab_tmux_fail 'failed to store sidebar width'

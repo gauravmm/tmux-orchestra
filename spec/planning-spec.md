@@ -47,7 +47,7 @@ A few cmux features intentionally **out of scope** for the tmux port: the embedd
 
 - It runs `tree` once and doesn't update. We need a long-lived renderer process.
 - It's a single sidebar; we want per-window state aggregated.
-- Its directory-tree purpose is orthogonal — `tmux-agentbar` could even coexist with it, bound to a different key.
+- Its directory-tree purpose is orthogonal — `tmux-orchestra` could even coexist with it, bound to a different key.
 
 **Recommendation:** Don't fork. Borrow the toggle pattern as a small shell module and build the renderer fresh.
 
@@ -55,10 +55,10 @@ A few cmux features intentionally **out of scope** for the tmux port: the embedd
 
 ### Components
 
-1. **`tmux-agentbar` plugin** — TPM-installable. `agentbar.tmux` registers key bindings, default options, and `set-hook`s.
-2. **`agentbar` CLI** — POSIX-shell wrapper around `tmux set-option`, `tmux show-options`, `tmux display-message`. Single script.
-3. **`agentbar-render`** — long-lived TUI living in the sidebar pane. Reads tmux state and redraws.
-4. **Notification dispatcher** — `agentbar-notify` shim that detects OS and calls the right notifier.
+1. **`tmux-orchestra` plugin** — TPM-installable. `orchestra.tmux` registers key bindings, default options, and `set-hook`s.
+2. **`orchestra` CLI** — POSIX-shell wrapper around `tmux set-option`, `tmux show-options`, `tmux display-message`. Single script.
+3. **`orchestra-render`** — long-lived TUI living in the sidebar pane. Reads tmux state and redraws.
+4. **Notification dispatcher** — `orchestra-notify` shim that detects OS and calls the right notifier.
 5. **Shell integration snippets** — bash/zsh/fish/PowerShell prompt hooks that auto-publish cwd, git branch, and last exit code.
 
 ### State model — everything lives in tmux user options
@@ -94,7 +94,7 @@ Plus: active status pills, progress bar (if `@ab_progress` set), unread dot (if 
 ### Sidebar pane
 
 - Opened with `split-window -bhd -l <width>` (left side, no focus, fixed width).
-- Runs `agentbar-render`, which:
+- Runs `orchestra-render`, which:
   - Polls `tmux list-windows -F '#{window_id}|#{window_name}|#{@ab_agent_state}|#{@ab_current_action}|#{@ab_branch}|#{@ab_cwd}|#{@ab_last_cmd}|#{@ab_progress}|#{@ab_unread}|...'` every 500 ms.
   - Subscribes to `set-hook` notifications via SIGUSR1 for instant redraws on `window-renamed`, `pane-focus-in`, `client-session-changed`.
   - Renders blocks: title bar (workspace name + branch), pill row, unicode progress bar `█████░░░░░ 50%`, the state-aware activity line (see render logic above), unread dot.
@@ -104,7 +104,7 @@ Plus: active status pills, progress bar (if `@ab_progress` set), unread dot (if 
 ### Notification flow
 
 ```
-agent → agentbar notify --title T --body B
+agent → orchestra notify --title T --body B
          │
          ├─ tmux set-option -w @ab_unread 1
          ├─ tmux set-option -w @ab_last_notification "T: B"
@@ -127,17 +127,17 @@ set -g pane-border-format '#{?#{@ab_unread},#[fg=red] ● ATTENTION ,#[fg=defaul
 The goal is that **any agent or harness in any language** can report status with one shell command. All four paths converge on the same tmux user-option store, so the sidebar renderer is agnostic to which one was used.
 
 1. **CLI (universal default)**
-   `agentbar set-status phase build --icon  --color cyan`
-   `agentbar set-progress 0.42 --label "Compiling crate 12/29"`
-   `agentbar notify --title "Tests" --body "37 passed, 2 failed"`
-   Defaults to caller's window/pane via `$TMUX_PANE`. Mirrors cmux's CLI surface (minus `log`, which we drop) so cmux-trained agents work after `alias cmux=agentbar`.
+   `orchestra set-status phase build --icon  --color cyan`
+   `orchestra set-progress 0.42 --label "Compiling crate 12/29"`
+   `orchestra notify --title "Tests" --body "37 passed, 2 failed"`
+   Defaults to caller's window/pane via `$TMUX_PANE`. Mirrors cmux's CLI surface (minus `log`, which we drop) so cmux-trained agents work after `alias cmux=orchestra`.
 
 2. **Shell prompt integration** (auto, no agent involvement)
    Bash `PROMPT_COMMAND`, zsh `precmd`, fish `fish_prompt` — each updates `@ab_cwd`, `@ab_branch`, `@ab_last_exit`, and `@ab_last_cmd` once per prompt. This handles 80% of the "git branch + cwd" use case for free.
 
 3. **Agent harness hooks** — scoped to Claude Code, Codex, and OpenCode for v0.1.
-   Ship template snippets that wire each harness's hook surface to `agentbar` calls. The two options the hooks write are `@ab_agent_state` (running / waiting / done) and `@ab_current_action` (the tool call or permission prompt text).
-   - **Claude Code**: `PreToolUse` → set state `running` and action to the tool name + args; `Notification` (waiting for input) → set state `waiting` and action to the prompt text; `Stop` / `SessionEnd` → set state `done`, clear `@ab_current_action`, `agentbar notify`. The Stop hook must always clear state so a crashed harness doesn't leave the sidebar stuck on "running."
+   Ship template snippets that wire each harness's hook surface to `orchestra` calls. The two options the hooks write are `@ab_agent_state` (running / waiting / done) and `@ab_current_action` (the tool call or permission prompt text).
+   - **Claude Code**: `PreToolUse` → set state `running` and action to the tool name + args; `Notification` (waiting for input) → set state `waiting` and action to the prompt text; `Stop` / `SessionEnd` → set state `done`, clear `@ab_current_action`, `orchestra notify`. The Stop hook must always clear state so a crashed harness doesn't leave the sidebar stuck on "running."
    - **Codex**: equivalent mapping via its `hooks.toml` (tool-start / tool-end / turn-end).
    - **OpenCode**: `on_tool_call` / `on_response` hooks → same primitives.
    Other harnesses (Cursor, Aider, etc.) can be added later; they all reduce to the same calls.
@@ -145,13 +145,13 @@ The goal is that **any agent or harness in any language** can report status with
 4. **Auto-discovery contract** for agents that want to mimic cmux's detection:
 
    ```
-   AGENTBAR=1
-   AGENTBAR_WINDOW_ID=@5
-   AGENTBAR_PANE_ID=%12
-   AGENTBAR_SOCKET=$TMUX        # tmux server socket path
+   ORCHESTRA=1
+   ORCHESTRA_WINDOW_ID=@5
+   ORCHESTRA_PANE_ID=%12
+   ORCHESTRA_SOCKET=$TMUX        # tmux server socket path
    ```
 
-   Exposed via tmux's `update-environment` so every new shell sees them. Agents check `[ -n "$AGENTBAR" ]` and switch behaviour.
+   Exposed via tmux's `update-environment` so every new shell sees them. Agents check `[ -n "$ORCHESTRA" ]` and switch behaviour.
 
 ## 6. Portability
 
@@ -168,19 +168,19 @@ Hard requirements: tmux ≥ 3.2 (for `display-popup`, modern format expansions, 
 
 ### Implementation language
 
-**POSIX shell, full stop.** Both the CLI and the `agentbar-render` TUI are single POSIX scripts — no Rust, no Go, no compiled binary, no build step. TPM clones the repo and the plugin works. This is an explicit constraint, not a "v0.1 default we'll revisit": a Rust rewrite would add a cross-compile matrix (Linux glibc/musl, macOS x86_64/arm64, WSL), force TPM to do a post-clone build or binary download, and raise the contribution barrier for the tmux crowd — all for a workload (a few option reads per 500 ms and a handful of `set-option` calls per agent event) that shell handles fine. Keep it shell.
+**POSIX shell, full stop.** Both the CLI and the `orchestra-render` TUI are single POSIX scripts — no Rust, no Go, no compiled binary, no build step. TPM clones the repo and the plugin works. This is an explicit constraint, not a "v0.1 default we'll revisit": a Rust rewrite would add a cross-compile matrix (Linux glibc/musl, macOS x86_64/arm64, WSL), force TPM to do a post-clone build or binary download, and raise the contribution barrier for the tmux crowd — all for a workload (a few option reads per 500 ms and a handful of `set-option` calls per agent event) that shell handles fine. Keep it shell.
 
 ## 7. Tradeoffs and known limitations
 
 - **The sidebar steals horizontal space.** Unlike cmux's GUI sidebar, ours is just another pane. Mitigation: bind `prefix + B` to toggle, and offer `prefix + Shift + B` to open an on-demand summary in `display-popup` instead (tmux 3.2+).
 - **No true per-pane "blue ring."** `pane-border-style` driven by `@ab_unread` is the closest analogue. Visible, but less attention-grabbing than cmux's animated glow.
 - **Surfaces (tabs inside a pane) don't exist in tmux.** We collapse them to windows. This is more tmux-idiomatic but breaks 1:1 with cmux's mental model — agent skills need a small adapter.
-- **State persistence dies with the tmux server.** _[FUTURE]_ Pair with `tmux-resurrect` and provide an `agentbar dump` / `agentbar restore` pair that snapshots the user-option tree to `~/.cache/agentbar/state.json`.
+- **State persistence dies with the tmux server.** _[FUTURE]_ Pair with `tmux-resurrect` and provide an `orchestra dump` / `orchestra restore` pair that snapshots the user-option tree to `~/.cache/orchestra/state.json`.
 - **Polling vs hooks.** tmux's `set-hook` doesn't fire on arbitrary option changes, so the renderer needs a 250–500 ms poll fallback. Acceptable cost; renderer reads ~1 KB per tick.
 - **Status bar vs sidebar.** Some users will prefer their existing tmux status-bar setup. The plugin should expose `@ab_render_in_statusline` as an alternative low-information mode (badge count + active workspace pill in the existing status line) so sidebar-averse users still benefit.
 - **Windows native** isn't possible without rewriting tmux. WSL is the practical answer.
 - **Pane sidebar inside multi-pane windows.** When the active window already has many splits, opening a sidebar squeezes everything. The toggle UX has to be flawless — copy `tmux-sidebar`'s layout-restore trick exactly.
-- **Concurrent writers.** Two agents in two panes both calling `agentbar set-status` race on the same option. tmux's option setter is atomic per call but not per logical update. Use namespaced keys (`@ab_status_<pane_id>_<key>`) when callers want pane-scoped pills.
+- **Concurrent writers.** Two agents in two panes both calling `orchestra set-status` race on the same option. tmux's option setter is atomic per call but not per logical update. Use namespaced keys (`@ab_status_<pane_id>_<key>`) when callers want pane-scoped pills.
 
 ## 8. Features
 
@@ -208,9 +208,9 @@ Hard requirements: tmux ≥ 3.2 (for `display-popup`, modern format expansions, 
 - Pane-scoped status keys (`@ab_status_<pane_id>_<key>`) for concurrent writers in the same window.
 - Mouse-click → `tmux select-window` on sidebar rows.
 - Fish and PowerShell prompt hooks.
-- `agentbar dump` / `agentbar restore` state snapshots. _[FUTURE]_
+- `orchestra dump` / `orchestra restore` state snapshots. _[FUTURE]_
 
 ## 9. Naming and licensing
 
-- Suggested name: **`tmux-agentbar`** (emphasises the agent-status-bar purpose, avoids confusion with the directory-listing `tmux-sidebar`).
+- Product name: **`tmux-orchestra`**.
 - License: MIT

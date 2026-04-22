@@ -1,0 +1,3 @@
+{
+  "_comment": "No config needed for local plugins. Copy orchestra.js to .opencode/plugins/ (or ~/.config/opencode/plugins/) and restart OpenCode. If published to npm, add the package name to your opencode.json plugin array."
+}
