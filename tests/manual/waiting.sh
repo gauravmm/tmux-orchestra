@@ -23,7 +23,7 @@ echo "Cycling running/waiting ${CYCLES} times. Watch the border color change."
 i=1
 while [ "$i" -le "$CYCLES" ]; do
 	echo "[cycle $i/$CYCLES] running..."
-	"$ORCHESTRA" set-state running --action "Doing work (cycle $i)"
+	"$ORCHESTRA" set-state running --spinner claude --action "Doing work (cycle $i)"
 	sleep 2
 
 	echo "[cycle $i/$CYCLES] waiting..."
