@@ -17,18 +17,21 @@ REPO_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")/../.." && pwd)
 ORCHESTRA="$REPO_DIR/bin/orchestra"
 
 CYCLES=${1:-5}
+RUN_TIME=${2:-2}
+WAIT_TIME=${3:-2}
+SPINNER=${4:-braille}
 
-echo "Cycling running/waiting ${CYCLES} times. Watch the border color change."
+echo "Cycling running/waiting ${CYCLES} times (run=${RUN_TIME}s wait=${WAIT_TIME}s spinner=${SPINNER}). Watch the border color change."
 
 i=1
 while [ "$i" -le "$CYCLES" ]; do
 	echo "[cycle $i/$CYCLES] running..."
-	"$ORCHESTRA" set-state running --spinner claude --action "Doing work (cycle $i)"
-	sleep 2
+	"$ORCHESTRA" set-state running --spinner "$SPINNER" --action "Doing work (cycle $i)"
+	sleep "$RUN_TIME"
 
 	echo "[cycle $i/$CYCLES] waiting..."
 	"$ORCHESTRA" set-state waiting --action "Allow action? (cycle $i)"
-	sleep 2
+	sleep "$WAIT_TIME"
 
 	i=$((i + 1))
 done
