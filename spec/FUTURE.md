@@ -7,7 +7,6 @@ Features planned
 - Throbber specific to each provider.
 - Progress bar rendering — currently the CLI writes @ab_progress but the renderer doesn't draw it
 - Pane-border unread indicator — red dot in the pane border when @ab_unread is set
-- Mouse support — click sidebar rows to switch windows
 
 ## Far
 

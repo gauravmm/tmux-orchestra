@@ -6,6 +6,7 @@ set -eu
 CURRENT_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
 
 tmux set-option -gq focus-events on
+tmux set-option -gq mouse on
 tmux set-option -gq @orchestra_nerd_fonts off
 tmux set-option -gq @orchestra_wait_color '#d29922'
 tmux set-option -gq @orchestra_key B
@@ -34,3 +35,11 @@ tmux set-hook -g window-renamed "run-shell '$notify_renderer'"
 tmux set-hook -g client-session-changed "run-shell '$notify_renderer'"
 # shellcheck disable=SC1083,SC2154
 tmux set-hook -g after-resize-pane "run-shell 'sidebar=$(tmux show-option -gvq -t \"#{session_name}\" @ab_sidebar_pane_id); [ -n \"$sidebar\" ] && [ \"$sidebar\" = \"#{pane_id}\" ] && tmux set-option -q -t \"#{session_name}\" @ab_width \"#{pane_width}\" >/dev/null 2>&1 || true'"
+
+# Mouse: clicking a window row in the sidebar switches to that window.
+# Non-sidebar clicks fall through to the default select-pane behaviour.
+# shellcheck disable=SC2016
+tmux bind-key -n MouseDown1Pane \
+    "if -F '#{==:#{pane_id},#{@ab_sidebar_pane_id}}' \
+        \"run-shell '$CURRENT_DIR/bin/orchestra-click #{mouse_y} #{session_name}'\" \
+        'select-pane -t=; send-keys -M'"

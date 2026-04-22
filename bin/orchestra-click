@@ -1,0 +1,23 @@
+#!/bin/sh
+# Map a mouse-click Y coordinate in the sidebar to a tmux window and select it.
+# Usage: orchestra-click <mouse_y> <session_name>
+set -eu
+
+ORCHESTRA_LIB=$(CDPATH='' cd -- "$(dirname -- "$0")/../lib" && pwd)
+# shellcheck disable=SC1091
+. "$ORCHESTRA_LIB/common.sh"
+
+mouse_y=$1
+session_name=$2
+
+# Each window block rendered by render_window_block is exactly 4 lines tall
+# (top border, detail row, meta row, bottom border).
+block=$((mouse_y / 4))
+
+# Select the window at the computed block index within this session.
+window_id=$(tmux list-windows -t "$session_name" -F '#{window_id}' 2>/dev/null \
+    | awk -v n="$block" 'NR == n+1 { print; exit }')
+
+[ -n "$window_id" ] || exit 0
+
+tmux select-window -t "$window_id" >/dev/null 2>&1 || true

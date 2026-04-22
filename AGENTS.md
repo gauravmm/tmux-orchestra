@@ -137,7 +137,6 @@ New harness templates belong in `hooks/<name>/` and follow this contract:
 The items in [spec/FUTURE.md](spec/FUTURE.md) are explicitly deferred. Do not implement:
 - Per-window color theming or arbitrary multi-pill rendering.
 - Pane-border unread indicators.
-- Mouse support.
 - Compact statusline integration.
 - State dump/restore.
 - Fish or PowerShell prompt hooks.
