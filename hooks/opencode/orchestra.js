@@ -1,4 +1,7 @@
 import { which } from "bun";
+import { readlinkSync } from "node:fs";
+
+export const id = "tmux-orchestra";
 
 export const OrchestraPlugin = async ({ $, directory, worktree }) => {
   let pendingTools = 0;
@@ -26,10 +29,59 @@ export const OrchestraPlugin = async ({ $, directory, worktree }) => {
     }
   };
 
-  const resolveWindow = async () => {
+  const resolveTTY = () => {
+    for (const fd of [2, 1, 0]) {
+      try {
+        const target = trim(readlinkSync(`/proc/self/fd/${fd}`));
+        if (target.startsWith("/dev/")) {
+          return target;
+        }
+      } catch {
+        // ignore
+      }
+    }
+    return "";
+  };
+
+  const launchTTY = resolveTTY();
+
+  const resolveTTYWindow = async () => {
+    if (!launchTTY) {
+      return "";
+    }
+
+    const panes = await tmux`tmux list-panes -a -F '#{window_id}|#{pane_tty}'`;
+    if (!panes) {
+      return "";
+    }
+
+    for (const line of panes.split("\n")) {
+      const [windowID, paneTTY] = line.split("|");
+      if (trim(paneTTY) === launchTTY) {
+        return trim(windowID);
+      }
+    }
+
+    return "";
+  };
+
+  const windowExists = async (windowID) => {
+    if (!windowID) {
+      return false;
+    }
+    const actual = await tmux`tmux display-message -p -t ${windowID} '#{window_id}'`;
+    return actual === windowID;
+  };
+
+  const resolveLaunchWindow = async () => {
     const explicitWindow = trim(process.env.ORCHESTRA_WINDOW_ID);
     if (explicitWindow) {
       return explicitWindow;
+    }
+
+    const ttyWindow = await resolveTTYWindow();
+    if (ttyWindow) {
+      return ttyWindow;
     }
 
     const pane = trim(process.env.TMUX_PANE);
@@ -40,33 +92,64 @@ export const OrchestraPlugin = async ({ $, directory, worktree }) => {
       }
     }
 
-    if (trim(process.env.TMUX)) {
-      const paths = [directory, worktree].map(trim).filter(Boolean);
-      if (paths.length > 0) {
-        const windows = await tmux`tmux list-windows -F '#{window_id}|#{pane_current_path}|#{@ab_cwd}'`;
-        if (windows) {
-          for (const line of windows.split("\n")) {
-            const [windowID, panePath, cwd] = line.split("|");
-            if (!windowID) {
-              continue;
-            }
-            if (paths.includes(trim(panePath)) || paths.includes(trim(cwd))) {
-              return trim(windowID);
-            }
-          }
-        }
-      }
+    return tmux`tmux display-message -p '#{window_id}'`;
+  };
 
-      const activeWindow = await tmux`tmux display-message -p '#{window_id}'`;
-      if (activeWindow) {
-        return activeWindow;
+  const launchWindow = await resolveLaunchWindow();
+
+  const resolveWindow = async () => {
+    const explicitWindow = trim(process.env.ORCHESTRA_WINDOW_ID);
+    if (explicitWindow && await windowExists(explicitWindow)) {
+      return explicitWindow;
+    }
+
+    // TMUX_PANE can lag behind after pane moves; pane TTY is a steadier anchor.
+    const ttyWindow = await resolveTTYWindow();
+    if (ttyWindow) {
+      return ttyWindow;
+    }
+
+    const pane = trim(process.env.TMUX_PANE);
+    if (pane) {
+      const paneWindow = await tmux`tmux display-message -p -t ${pane} '#{window_id}'`;
+      if (paneWindow) {
+        return paneWindow;
       }
     }
 
-    return "";
-  };
+    if (launchWindow && await windowExists(launchWindow)) {
+      return launchWindow;
+    }
 
-  const targetWindow = await resolveWindow();
+    const paths = [directory, worktree].map(trim).filter(Boolean);
+    if (paths.length > 0) {
+      const windows = await tmux`tmux list-windows -F '#{window_id}|#{window_active}|#{pane_current_path}|#{@ab_cwd}'`;
+      if (windows) {
+        const matches = [];
+        for (const line of windows.split("\n")) {
+          const [windowID, windowActive, panePath, cwd] = line.split("|");
+          if (!windowID) {
+            continue;
+          }
+          if (paths.includes(trim(panePath)) || paths.includes(trim(cwd))) {
+            matches.push({
+              windowID: trim(windowID),
+              windowActive: trim(windowActive),
+            });
+          }
+        }
+        if (matches.length > 0) {
+          const activeMatch = matches.find((match) => match.windowActive === "1");
+          if (activeMatch) {
+            return activeMatch.windowID;
+          }
+          return matches[0].windowID;
+        }
+      }
+    }
+
+    return tmux`tmux display-message -p '#{window_id}'`;
+  };
 
   const run = async (pieces, ...values) => {
     try {
@@ -77,6 +160,8 @@ export const OrchestraPlugin = async ({ $, directory, worktree }) => {
   };
 
   const runState = async (state, action = "") => {
+    const targetWindow = await resolveWindow();
+
     if (state === "running") {
       if (targetWindow && action) {
         await run`${orchestra} set-state running --spinner opencode --action ${action} --window ${targetWindow}`;
@@ -119,6 +204,7 @@ export const OrchestraPlugin = async ({ $, directory, worktree }) => {
   };
 
   const clearState = async () => {
+    const targetWindow = await resolveWindow();
     if (targetWindow) {
       await run`${orchestra} clear-state --window ${targetWindow}`;
       return;
@@ -127,6 +213,10 @@ export const OrchestraPlugin = async ({ $, directory, worktree }) => {
   };
 
   return {
+    "chat.message": async () => {
+      await runState("running");
+    },
+
     "tool.execute.before": async (input, output) => {
       pendingTools++;
       await runState("running", input.tool);
@@ -154,4 +244,11 @@ export const OrchestraPlugin = async ({ $, directory, worktree }) => {
       }
     },
   };
+};
+
+export const server = OrchestraPlugin;
+
+export default {
+  id,
+  server: OrchestraPlugin,
 };
