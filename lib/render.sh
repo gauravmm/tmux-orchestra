@@ -57,6 +57,18 @@ render_color_start() {
 	esac
 }
 
+render_border_start() {
+	window_active=$1
+	[ "$window_active" = '1' ] && return 0
+	render_color_start '#c0c0c0'
+}
+
+render_border_end() {
+	window_active=$1
+	[ "$window_active" = '1' ] && return 0
+	render_reset
+}
+
 render_repeat() {
 	char=$1
 	count=$2
@@ -112,6 +124,11 @@ render_state_glyph() {
 		claude)
 			set -- '·' '✻' '✽' '✶' '✱' '✢'
 			eval "printf '%s' \"\${$((frame % 6 + 1))}\""
+			;;
+		opencode)
+			# Approximate OpenCode's 4x4 pulsing square grid in two braille cells.
+			set -- '⢎⡱' '⢞⡳' '⢎⡷' '⢮⡵' '⢾⡱' '⠰⠆' '⢾⡷' '⠰⠆'
+			eval "printf '%s' \"\${$((frame % 8 + 1))}\""
 			;;
 		*)
 			if [ "$nerd" = 'on' ]; then
@@ -208,6 +225,34 @@ render_phase_pill() {
 	render_reset
 }
 
+render_cwd_label() {
+	cwd=$1
+
+	label=$(printf '%s' "$cwd" | awk '
+		BEGIN { ORS = "" }
+		{
+			path = $0
+			n = split(path, parts, "/")
+			label = ""
+			for (i = n; i >= 1; i--) {
+				if (parts[i] != "") {
+					label = parts[i]
+					break
+				}
+			}
+			if (label == "") {
+				label = "/"
+			}
+			if (length(label) > 16) {
+				label = substr(label, length(label) - 15)
+			}
+			print label
+		}
+	')
+
+	printf '%s' "$label"
+}
+
 render_activity() {
 	state=$1
 	action=$2
@@ -220,11 +265,11 @@ render_activity() {
 		;;
 	*)
 		if [ -n "$cwd" ] && [ -n "$last_cmd" ]; then
-			printf 'cwd=%s  $ %s' "$cwd" "$last_cmd"
+			printf '%s  $ %s' "$(render_cwd_label "$cwd")" "$last_cmd"
 		elif [ -n "$last_cmd" ]; then
 			printf '$ %s' "$last_cmd"
 		else
-			printf '%s' "$cwd"
+			printf '%s' "$(render_cwd_label "$cwd")"
 		fi
 		;;
 	esac
@@ -340,10 +385,33 @@ render_window_block() {
 	title_pad=$(render_repeat "$_h" "$pad")
 	bottom_pad=$(render_repeat "$_h" $((width - 1)))
 
-	with_style "$title_style" "$wait_color" '%s%s %s %s\n' "$_tl" "$_h" "$title_body" "$title_pad"
-	with_style "$row_style" "$wait_color" '%s %s' "$_v" "$detail_text"; render_erase_eol; printf '\n'
-	with_style "$row_style" "$wait_color" '%s %s' "$_v" "$meta_text"; render_erase_eol; printf '\n'
-	with_style "$row_style" "$wait_color" '%s%s\n' "$_bl" "$bottom_pad"
+	render_border_start "$window_active"
+	printf '%s%s ' "$_tl" "$_h"
+	render_border_end "$window_active"
+	with_style "$title_style" "$wait_color" '%s' "$title_body"
+	render_border_start "$window_active"
+	printf ' %s' "$title_pad"
+	render_border_end "$window_active"
+	printf '\n'
+
+	render_border_start "$window_active"
+	printf '%s ' "$_v"
+	render_border_end "$window_active"
+	with_style "$row_style" "$wait_color" '%s' "$detail_text"
+	render_erase_eol
+	printf '\n'
+
+	render_border_start "$window_active"
+	printf '%s ' "$_v"
+	render_border_end "$window_active"
+	with_style "$row_style" "$wait_color" '%s' "$meta_text"
+	render_erase_eol
+	printf '\n'
+
+	render_border_start "$window_active"
+	printf '%s%s' "$_bl" "$bottom_pad"
+	render_border_end "$window_active"
+	printf '\n'
 }
 
 render_rows() {

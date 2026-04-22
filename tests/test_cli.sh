@@ -84,7 +84,9 @@ assert_eq '' "$(tmux show-options -v -w -t "$window_id" @ab_agent_state 2>/dev/n
 
 # Mouse click: orchestra-click <y> <session> selects the window at block y/4.
 # Create a second window so we have two to click between.
-window2_id=$(tmux new-window -t orchestra-tests -P -F '#{window_id}')
+window2_info=$(tmux new-window -t orchestra-tests -P -F '#{window_id}|#{pane_id}')
+window2_id=${window2_info%%|*}
+pane2_id=${window2_info#*|}
 # Switch back to window 1 so it is the active window.
 tmux select-window -t "$window_id"
 active_before=$(tmux display-message -p -t orchestra-tests '#{window_id}')
@@ -101,5 +103,14 @@ assert_eq "$window_id" "$active_back" 'orchestra-click y=0 selects first window'
 orchestra-click 999 orchestra-tests
 active_unchanged=$(tmux display-message -p -t orchestra-tests '#{window_id}')
 assert_eq "$window_id" "$active_unchanged" 'orchestra-click out-of-range is a no-op'
+
+# A stale ORCHESTRA_WINDOW_ID must not override the pane the command is
+# actually running in.
+TMUX_PANE="$pane2_id" ORCHESTRA_WINDOW_ID="$window_id" orchestra set-state running --action 'pane wins'
+assert_eq 'running' "$(tmux show-options -v -w -t "$window2_id" @ab_agent_state)" 'TMUX_PANE resolves the target window before stale ORCHESTRA_WINDOW_ID'
+assert_eq 'pane wins' "$(tmux show-options -v -w -t "$window2_id" @ab_current_action)" 'state from the pane lands on the pane window'
+assert_eq '' "$(tmux show-options -v -w -t "$window_id" @ab_agent_state 2>/dev/null || printf '')" 'stale ORCHESTRA_WINDOW_ID is ignored when TMUX_PANE is present'
+orchestra clear-state --window "$window2_id"
+
 # Clean up extra window.
 tmux kill-window -t "$window2_id"

@@ -121,13 +121,13 @@ resolve_window() {
         return 0
     fi
 
+    if [ -n "${TMUX_PANE:-}" ]; then
+        tmux display-message -p -t "$TMUX_PANE" '#{window_id}' 2>/dev/null && return 0
+    fi
+
     if [ -n "${ORCHESTRA_WINDOW_ID:-}" ]; then
         printf '%s\n' "$ORCHESTRA_WINDOW_ID"
         return 0
-    fi
-
-    if [ -n "${TMUX_PANE:-}" ]; then
-        tmux display-message -p -t "$TMUX_PANE" '#{window_id}' 2>/dev/null && return 0
     fi
 
     tmux display-message -p '#{window_id}' 2>/dev/null && return 0
