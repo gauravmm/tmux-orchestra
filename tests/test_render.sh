@@ -44,7 +44,7 @@ check_inactive_border_color() {
     esac
 
     case "$second_line" in
-        "${esc}[38;2;192;192;192m│ ${esc}[0m"*)
+        "${esc}[38;2;192;192;192m│${esc}[0m"*)
             :
             ;;
         *)

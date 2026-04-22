@@ -74,11 +74,6 @@ export const OrchestraPlugin = async ({ $, directory, worktree }) => {
   };
 
   const resolveLaunchWindow = async () => {
-    const explicitWindow = trim(process.env.ORCHESTRA_WINDOW_ID);
-    if (explicitWindow) {
-      return explicitWindow;
-    }
-
     const ttyWindow = await resolveTTYWindow();
     if (ttyWindow) {
       return ttyWindow;
@@ -92,17 +87,17 @@ export const OrchestraPlugin = async ({ $, directory, worktree }) => {
       }
     }
 
+    const explicitWindow = trim(process.env.ORCHESTRA_WINDOW_ID);
+    if (explicitWindow) {
+      return explicitWindow;
+    }
+
     return tmux`tmux display-message -p '#{window_id}'`;
   };
 
   const launchWindow = await resolveLaunchWindow();
 
   const resolveWindow = async () => {
-    const explicitWindow = trim(process.env.ORCHESTRA_WINDOW_ID);
-    if (explicitWindow && await windowExists(explicitWindow)) {
-      return explicitWindow;
-    }
-
     // TMUX_PANE can lag behind after pane moves; pane TTY is a steadier anchor.
     const ttyWindow = await resolveTTYWindow();
     if (ttyWindow) {
@@ -115,6 +110,11 @@ export const OrchestraPlugin = async ({ $, directory, worktree }) => {
       if (paneWindow) {
         return paneWindow;
       }
+    }
+
+    const explicitWindow = trim(process.env.ORCHESTRA_WINDOW_ID);
+    if (explicitWindow && await windowExists(explicitWindow)) {
+      return explicitWindow;
     }
 
     if (launchWindow && await windowExists(launchWindow)) {
@@ -237,7 +237,11 @@ export const OrchestraPlugin = async ({ $, directory, worktree }) => {
     },
 
     event: async ({ event }) => {
-      if (event.type === "session.idle") {
+      if (
+        event.type === "session.idle" ||
+        event.type === "session.deleted" ||
+        event.type === "server.instance.disposed"
+      ) {
         pendingTools = 0;
         await runState("done");
         await clearState();

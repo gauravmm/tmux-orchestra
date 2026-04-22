@@ -26,6 +26,7 @@ Restart OpenCode. The plugin auto-loads from `.opencode/plugins/` — no config 
 | `tool.execute.after` | `done` (when last tool finishes) | — |
 | `permission.ask` | `waiting` | Permission title |
 | `session.idle` | `done` | — |
+| `session.deleted` / `server.instance.disposed` | `done` + clear | — |
 
 A pending-tool counter prevents flicker when OpenCode chains multiple tools in sequence. The `chat.message` hook makes the spinner appear during pure "thinking/responding" turns even when no tool runs.
 

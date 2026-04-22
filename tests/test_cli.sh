@@ -82,7 +82,7 @@ assert_eq '' "$(tmux show-options -v -w -t "$window_id" @ab_current_action 2>/de
 orchestra clear-state --window "$window_id"
 assert_eq '' "$(tmux show-options -v -w -t "$window_id" @ab_agent_state 2>/dev/null || printf '')" 'clear-state clears agent state'
 
-# Mouse click: orchestra-click <y> <session> selects the window at block y/4.
+# Mouse click: orchestra-click <y> <session> selects the window at block y/3.
 # Create a second window so we have two to click between.
 window2_info=$(tmux new-window -t orchestra-tests -P -F '#{window_id}|#{pane_id}')
 window2_id=${window2_info%%|*}
@@ -91,8 +91,8 @@ pane2_id=${window2_info#*|}
 tmux select-window -t "$window_id"
 active_before=$(tmux display-message -p -t orchestra-tests '#{window_id}')
 assert_eq "$window_id" "$active_before" 'window 1 is active before click'
-# Y=4 → block 1 → second window (0-indexed).
-orchestra-click 4 orchestra-tests
+# Y=3 → block 1 → second window (0-indexed).
+orchestra-click 3 orchestra-tests
 active_after=$(tmux display-message -p -t orchestra-tests '#{window_id}')
 assert_eq "$window2_id" "$active_after" 'orchestra-click selects the correct window'
 # Y=0 → block 0 → first window.

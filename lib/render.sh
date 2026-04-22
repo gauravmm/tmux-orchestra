@@ -20,9 +20,9 @@ render_erase_eol() {
 render_spinner_color() {
 	spinner=$1
 	case "$spinner" in
-		claude)   printf '#D97757' ;;
-		braille)  printf 'blue' ;;
-		opencode) printf '#38BDF8' ;;
+	claude) printf '#D97757' ;;
+	braille) printf 'blue' ;;
+	opencode) printf '#38BDF8' ;;
 	esac
 }
 
@@ -297,9 +297,12 @@ with_style() {
 	fmt=$3
 	shift 3
 	case "$style" in
-		bold) render_bold_start ;;
-		color) render_color_start "$color" ;;
-		bold_color) render_bold_start; render_color_start "$color" ;;
+	bold) render_bold_start ;;
+	color) render_color_start "$color" ;;
+	bold_color)
+		render_bold_start
+		render_color_start "$color"
+		;;
 	esac
 	# shellcheck disable=SC2059
 	printf "$fmt" "$@"
@@ -340,7 +343,7 @@ render_window_block() {
 	glyph=$(render_state_glyph "$state" "$frame" "$nerd" "$spinner")
 	glyph_color=$(render_spinner_color "$spinner")
 	if [ -n "$glyph" ] && [ -n "$activity" ]; then
-		activity=$(render_trim $((width - 4)) "$activity")
+		activity=$(render_trim $((width - 3)) "$activity")
 	elif [ -z "$glyph" ]; then
 		activity=$(render_trim $((width - 2)) "$activity")
 	fi
@@ -372,12 +375,10 @@ render_window_block() {
 		_tl='┏'
 		_h='━'
 		_v='┃'
-		_bl='┗'
 	else
 		_tl='┌'
 		_h='─'
 		_v='│'
-		_bl='└'
 	fi
 
 	# Pick style: bold for active, color for waiting, both if both.
@@ -394,7 +395,6 @@ render_window_block() {
 	[ "$state" = 'waiting' ] && row_style='color'
 
 	title_pad=$(render_repeat "$_h" "$pad")
-	bottom_pad=$(render_repeat "$_h" $((width - 1)))
 
 	render_border_start "$window_active"
 	printf '%s%s ' "$_tl" "$_h"
@@ -406,7 +406,7 @@ render_window_block() {
 	printf '\n'
 
 	render_border_start "$window_active"
-	printf '%s ' "$_v"
+	printf '%s' "$_v"
 	render_border_end "$window_active"
 	if [ -n "$glyph" ]; then
 		if [ "$row_style" = 'color' ]; then
@@ -425,6 +425,7 @@ render_window_block() {
 			with_style "$row_style" "$wait_color" '%s' "$activity"
 		fi
 	else
+		printf ' '
 		with_style "$row_style" "$wait_color" '%s' "$activity"
 	fi
 	render_erase_eol
@@ -435,11 +436,6 @@ render_window_block() {
 	render_border_end "$window_active"
 	with_style "$row_style" "$wait_color" '%s' "$meta_text"
 	render_erase_eol
-	printf '\n'
-
-	render_border_start "$window_active"
-	printf '%s%s' "$_bl" "$bottom_pad"
-	render_border_end "$window_active"
 	printf '\n'
 }
 

@@ -10,9 +10,9 @@ ORCHESTRA_LIB=$(CDPATH='' cd -- "$(dirname -- "$0")/../lib" && pwd)
 mouse_y=$1
 session_name=$2
 
-# Each window block rendered by render_window_block is exactly 4 lines tall
-# (top border, detail row, meta row, bottom border).
-block=$((mouse_y / 4))
+# Each window block rendered by render_window_block is exactly 3 lines tall
+# (top border, detail row, meta row).
+block=$((mouse_y / 3))
 
 # Select the window at the computed block index within this session.
 window_id=$(tmux list-windows -t "$session_name" -F '#{window_id}' 2>/dev/null \
