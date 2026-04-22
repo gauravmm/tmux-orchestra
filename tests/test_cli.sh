@@ -32,6 +32,18 @@ assert_eq() {
     fi
 }
 
+"$REPO_DIR/orchestra.tmux"
+mouse_binding=$(tmux list-keys -T root MouseDown1Pane)
+case "$mouse_binding" in
+    *"if-shell -F -t ="*"orchestra-click #{mouse_y} #{session_name}"*)
+        :
+        ;;
+    *)
+        printf 'assertion failed: MouseDown1Pane targets the pane under the mouse\nactual:   %s\n' "$mouse_binding" >&2
+        exit 1
+        ;;
+esac
+
 orchestra set-status phase build --icon '*' --color cyan --window "$window_id"
 assert_eq 'build' "$(tmux show-options -v -w -t "$window_id" @ab_status_phase)" 'status text is written'
 assert_eq '*' "$(tmux show-options -v -w -t "$window_id" @ab_status_phase__icon)" 'status icon is written'
