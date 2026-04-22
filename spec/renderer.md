@@ -49,5 +49,6 @@ Do not use `\033[2J` (erase-screen) before drawing. Instead: move cursor to home
 ## Constraints
 
 - `lib/render.sh` must be pure — no tmux calls inside `render_rows` or any function it calls. All tmux I/O happens in the `redraw` function in `bin/orchestra-render` before rendering begins.
-- **No mouse support in v0.1** (deferred to v0.3). No horizontal scrolling. If a window has a very long `@ab_current_action`, truncate to pane-width minus 4 with trailing `…`.
+- **Mouse support:** clicks on a sidebar window row select that window (see [sidebar.md](sidebar.md) **Mouse bindings**). The renderer itself is not involved in click handling — `bin/orchestra-click` maps click Y-coordinates back to windows based on the fixed 3-lines-per-block row height produced here. **If you change the number of lines `render_window_block` emits, update `bin/orchestra-click`.**
+- No horizontal scrolling. If a window has a very long `@ab_current_action`, truncate to pane-width minus 4 with trailing `…`.
 - **Color output:** use `tput setaf` via a small wrapper in `lib/render.sh`. On `TERM=dumb` or when `NO_COLOR` is set, drop all ANSI.

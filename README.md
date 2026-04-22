@@ -53,6 +53,14 @@ run '~/.tmux/plugins/tpm/tpm'
 
 3. Install the plugin with `prefix + I` (capital i).
 4. Toggle the sidebar with `prefix + B`.
+5. *(Optional)* If your terminal has a Nerd-Font-patched font, enable nicer
+   glyphs (braille spinners, `` branch, `●` unread dot, etc.):
+
+   ```sh
+   tmux set-option -g @orchestra_nerd_fonts on
+   ```
+
+   Or add `set -g @orchestra_nerd_fonts on` to `~/.tmux.conf` to make it stick.
 
 ## Prompt hooks
 
@@ -129,3 +137,15 @@ make test
   query per tick.
 - **Prompt hook tmux budget:** the hooks batch writes into one `tmux` command
   after resolving the window id so they stay lightweight in interactive shells.
+
+## Vibe Check
+
+This is vibe coded over a day. The code quality is somewhere between "not great" and "its gonna take a flamethrower."
+
+Here's an honest view of what needs to be done to get it functionally on par with cmux:
+
+1. Better hooks for `opencode`.
+2. More hooks (`claude code`, `codex`, etc.)
+3. Any styling support.
+4. More stable correlation of hooks to window. This one is pretty platform-specific.
+5. More performant. We've just about reached the limit with what you can do with bash.

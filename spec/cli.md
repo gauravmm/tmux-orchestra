@@ -13,12 +13,14 @@ orchestra clear-status <key> [--window ID]
 orchestra list-status [--window ID]
 orchestra set-progress <float> [--label TEXT] [--window ID]
 orchestra clear-progress [--window ID]
-orchestra notify --title T [--body B] [--subtitle S] [--window ID]
+orchestra notify --title T [--body B] [--subtitle S] [--quiet] [--window ID]
 orchestra set-state <running|waiting|done> [--action TEXT] [--window ID]
 orchestra clear-state [--window ID]
 ```
 
 `set-state` is sugar for `set-option @ab_agent_state` + optional `@ab_current_action`. It exists so harness templates are one-liners. When `--action` is omitted, the previous action is cleared (the sidebar shows a bare state glyph).
+
+`notify` always writes `@ab_unread` and `@ab_last_notification`; `--quiet` suppresses only the platform notifier (`bin/orchestra-notify`). Use `--quiet` for hooks that want the sidebar marker + context line without firing a desktop toast (e.g. "file changed in background", bulk marker setup in manual tests).
 
 **Argument parsing.** POSIX-compatible hand-rolled parser (no `getopts` long options). Template:
 

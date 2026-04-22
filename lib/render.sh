@@ -207,20 +207,13 @@ render_progress() {
 	[ -n "$label" ] && printf ' %s' "$label"
 }
 
-render_unread() {
-	unread=$1
-	nerd=$2
-	[ "$unread" = '1' ] || return 0
-
+render_unread_dot() {
+	nerd=$1
 	if [ "$nerd" = 'on' ]; then
-		dot='●'
+		printf '%s' '●'
 	else
-		dot='!'
+		printf '%s' '!'
 	fi
-
-	render_color_start red
-	printf '%s' "$dot"
-	render_reset
 }
 
 render_phase_pill() {
@@ -350,7 +343,6 @@ render_window_block() {
 
 	pill=$(render_phase_pill "$phase" "$phase_icon" "$phase_color")
 	progress_text=$(render_progress "$progress" "$progress_label" "$nerd")
-	unread_text=$(render_unread "$unread" "$nerd")
 
 	meta_text=''
 	if [ -n "$pill" ]; then
@@ -359,10 +351,6 @@ render_window_block() {
 	if [ -n "$progress_text" ]; then
 		[ -n "$meta_text" ] && meta_text="$meta_text  "
 		meta_text=$meta_text$progress_text
-	fi
-	if [ -n "$unread_text" ]; then
-		[ -n "$meta_text" ] && meta_text="$meta_text  "
-		meta_text=$meta_text$unread_text
 	fi
 	if [ -z "$meta_text" ] && [ -n "$last_notification" ]; then
 		meta_text=$(render_trim $((width - 2)) "$last_notification")
@@ -394,15 +382,34 @@ render_window_block() {
 	row_style=''
 	[ "$state" = 'waiting' ] && row_style='color'
 
-	title_pad=$(render_repeat "$_h" "$pad")
+	# When the window is unread, replace the second-to-last character of the
+	# top border with a red filled circle. Skip when pad < 2 (title fills the
+	# row) — the notification summary in the meta row is still available as a
+	# fallback signal.
+	show_dot=0
+	if [ "$unread" = '1' ] && [ "$pad" -ge 2 ]; then
+		show_dot=1
+		pad_before_dot=$((pad - 2))
+	else
+		pad_before_dot=$pad
+	fi
 
 	render_border_start "$window_active"
 	printf '%s%s ' "$_tl" "$_h"
 	render_border_end "$window_active"
 	with_style "$title_style" "$wait_color" '%s' "$title_body"
 	render_border_start "$window_active"
-	printf ' %s' "$title_pad"
+	printf ' '
+	render_repeat "$_h" "$pad_before_dot"
 	render_border_end "$window_active"
+	if [ "$show_dot" = '1' ]; then
+		render_color_start red
+		render_unread_dot "$nerd"
+		render_reset
+		render_border_start "$window_active"
+		printf '%s' "$_h"
+		render_border_end "$window_active"
+	fi
 	printf '\n'
 
 	render_border_start "$window_active"

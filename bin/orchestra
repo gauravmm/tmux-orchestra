@@ -12,7 +12,7 @@ usage() {
   orchestra list-status [--window ID]
   orchestra set-progress <float> [--label TEXT] [--window ID]
   orchestra clear-progress [--window ID]
-  orchestra notify --title T [--body B] [--subtitle S] [--window ID]
+  orchestra notify --title T [--body B] [--subtitle S] [--quiet] [--window ID]
   orchestra set-state <running|waiting|done> [--action TEXT] [--window ID]
   orchestra clear-state [--window ID]"
 }
@@ -178,12 +178,14 @@ cmd_notify() {
     title=''
     body=''
     subtitle=''
+    quiet=''
     win=''
     while [ $# -gt 0 ]; do
         case "$1" in
             --title) [ $# -ge 2 ] || usage; title=$2; shift 2 ;;
             --body) [ $# -ge 2 ] || usage; body=$2; shift 2 ;;
             --subtitle) [ $# -ge 2 ] || usage; subtitle=$2; shift 2 ;;
+            --quiet) quiet=1; shift ;;
             --window) [ $# -ge 2 ] || usage; win=$2; shift 2 ;;
             --) shift; break ;;
             -*) ab_usage "unknown flag: $1" ;;
@@ -200,6 +202,7 @@ cmd_notify() {
 
     set_opt "$target" '@ab_unread' '1' || ab_tmux_fail 'failed to mark unread'
     set_opt "$target" '@ab_last_notification' "$summary" || ab_tmux_fail 'failed to record notification'
+    [ -n "$quiet" ] && return 0
     "$(ab_plugin_dir)/bin/orchestra-notify" --title "$title" --body "$body" --subtitle "$subtitle"
 }
 

@@ -73,6 +73,14 @@ assert_eq '1' "$(tmux show-options -v -w -t "$window_id" @ab_unread)" 'notify ma
 assert_eq 'Build — CI: done' "$(tmux show-options -v -w -t "$window_id" @ab_last_notification)" 'notify stores summary'
 assert_eq 'Build|done|CI' "$(cat "$TMP_DIR/notifier.out")" 'notify calls notifier shim'
 
+# --quiet still writes option state but skips the notifier shim entirely.
+tmux set-option -wqu -t "$window_id" @ab_unread
+rm -f "$TMP_DIR/notifier.out"
+ORCHESTRA_NOTIFIER="$TMP_DIR/notifier" orchestra notify --title 'Review' --body 'arrived' --quiet --window "$window_id"
+assert_eq '1' "$(tmux show-options -v -w -t "$window_id" @ab_unread)" 'notify --quiet marks unread'
+assert_eq 'Review: arrived' "$(tmux show-options -v -w -t "$window_id" @ab_last_notification)" 'notify --quiet stores summary'
+[ ! -e "$TMP_DIR/notifier.out" ] || { printf 'assertion failed: --quiet must not invoke the notifier shim\n' >&2; exit 1; }
+
 orchestra set-state running --action 'pytest' --window "$window_id"
 assert_eq 'running' "$(tmux show-options -v -w -t "$window_id" @ab_agent_state)" 'state is written'
 assert_eq 'pytest' "$(tmux show-options -v -w -t "$window_id" @ab_current_action)" 'action is written'

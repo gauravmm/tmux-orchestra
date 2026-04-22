@@ -75,12 +75,12 @@ orchestra clear-status <key>
 orchestra list-status
 orchestra set-progress <float> [--label TEXT]
 orchestra clear-progress
-orchestra notify --title T [--body B] [--subtitle S]
+orchestra notify --title T [--body B] [--subtitle S] [--quiet]
 orchestra set-state <running|waiting|done> [--action TEXT]
 orchestra clear-state
 ```
 
-All subcommands accept `--window <id>` to target a specific window. Without it, window resolution falls through four steps (see `resolve_window` in [lib/common.sh](lib/common.sh)): explicit flag → `$ORCHESTRA_WINDOW_ID` → `$TMUX_PANE` → current window.
+All subcommands accept `--window <id>` to target a specific window. Without it, window resolution falls through four steps (see `resolve_window` in [lib/common.sh](lib/common.sh)): explicit flag → `$TMUX_PANE` → `$ORCHESTRA_WINDOW_ID` → current window.
 
 Exit codes: `0` success, `1` usage error, `2` not in tmux, `3` tmux call failed.
 

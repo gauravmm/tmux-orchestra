@@ -1,15 +1,21 @@
 #!/bin/sh
-# Manual test: 6 windows showing a mix of spinners, states, and unread flags
+# Manual test: 9 windows showing a mix of spinners, states, and unread flags
 # simultaneously. Open the sidebar before running, then watch it update.
 # Total runtime: ~60s (12 steps × 5s).
 #
+# All notify calls use --quiet so the showcase does not fire real desktop
+# toasts; it only exercises the in-tmux marker rendering.
+#
 # Windows created:
-#   claude     — cycling: reading → writing → waiting for approval → applying
-#   opencode   — cycling: read_file → write_file → bash
-#   ask        — alternating: waiting ↔ running
-#   done       — static: done, no unread
-#   notified   — static: done + unread notification
-#   run+notice — static: running (claude) + unread notification
+#   claude       — cycling: reading → writing → waiting for approval → applying
+#   opencode     — cycling: read_file → write_file → bash
+#   ask          — alternating: waiting ↔ running
+#   done         — static: done, no unread
+#   notified     — static: done + unread notification
+#   run+notice   — static: running (claude) + unread notification
+#   idle-unread  — static: no state, just an unread marker + context line
+#   wait-unread  — static: waiting + unread
+#   done-unread  — static: done + unread (different context from `notified`)
 
 set -eu
 
@@ -32,20 +38,31 @@ cleanup() {
 }
 trap cleanup EXIT INT TERM
 
-printf 'Creating 6 windows...\n'
+printf 'Creating 9 windows...\n'
 w_claude=$(new_win 'claude')
 w_ocode=$(new_win 'opencode')
 w_ask=$(new_win 'ask')
 w_done=$(new_win 'done')
 w_notif=$(new_win 'notified')
 w_runrd=$(new_win 'run+notice')
+w_idle_rd=$(new_win 'idle-unread')
+w_wait_rd=$(new_win 'wait-unread')
+w_done_rd=$(new_win 'done-unread')
 
 # Static windows — set once and leave alone.
 "$ORCHESTRA" set-state done --window "$w_done"
 "$ORCHESTRA" set-state done --window "$w_notif"
-"$ORCHESTRA" notify --title "Claude" --body "Build finished with 2 warnings" --window "$w_notif"
+"$ORCHESTRA" notify --title "Claude" --body "Build finished with 2 warnings" --quiet --window "$w_notif"
 "$ORCHESTRA" set-state running --spinner claude --action "Running test suite" --window "$w_runrd"
-"$ORCHESTRA" notify --title "Claude" --body "Awaiting your review" --window "$w_runrd"
+"$ORCHESTRA" notify --title "Claude" --body "Awaiting your review" --quiet --window "$w_runrd"
+
+# Starting-unread windows — each demonstrates the unread marker in a different
+# base state. All use --quiet so no desktop toasts fire.
+"$ORCHESTRA" notify --title "Reminder" --body "Check logs" --quiet --window "$w_idle_rd"
+"$ORCHESTRA" set-state waiting --action "Allow write to /etc/hosts?" --window "$w_wait_rd"
+"$ORCHESTRA" notify --title "Claude" --body "Permission required" --quiet --window "$w_wait_rd"
+"$ORCHESTRA" set-state done --window "$w_done_rd"
+"$ORCHESTRA" notify --title "OpenCode" --body "3 files changed" --quiet --window "$w_done_rd"
 
 printf 'Running for ~60s. Watch the sidebar.\n\n'
 

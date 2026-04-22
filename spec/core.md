@@ -71,10 +71,12 @@ All options are tmux **window** options unless noted. Keys are literal — the r
 **Target resolution.** Every CLI call resolves "which window?" in this order:
 
 1. `--window <id>` flag if given.
-2. `$ORCHESTRA_WINDOW_ID` if set (see Auto-discovery env vars below).
-3. `tmux display-message -p -t "$TMUX_PANE" '#{window_id}'` if `$TMUX_PANE` set.
+2. `tmux display-message -p -t "$TMUX_PANE" '#{window_id}'` if `$TMUX_PANE` set.
+3. `$ORCHESTRA_WINDOW_ID` if set (see Auto-discovery env vars below).
 4. `tmux display-message -p '#{window_id}'` (current window).
 5. Error: "not in tmux and no --window given."
+
+`$TMUX_PANE` is checked before `$ORCHESTRA_WINDOW_ID` because it is the most specific signal: it is set by tmux itself in every child process of a pane, so it always points at the shell that issued the command. `$ORCHESTRA_WINDOW_ID` is best-effort (it is only refreshed by `pane-focus-in` hooks and will be stale inside long-lived shells) and so it is used as a fallback only when `$TMUX_PANE` is unavailable.
 
 Implement this as `resolve_window()` in `lib/common.sh` once; every CLI entrypoint calls it.
 

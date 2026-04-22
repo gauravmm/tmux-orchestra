@@ -212,6 +212,21 @@ export const OrchestraPlugin = async ({ $, directory, worktree }) => {
     await run`${orchestra} clear-state`;
   };
 
+  const notify = async (title, body, { quiet = false } = {}) => {
+    const targetWindow = await resolveWindow();
+    const args = ["notify", "--title", title];
+    if (body) {
+      args.push("--body", body);
+    }
+    if (quiet) {
+      args.push("--quiet");
+    }
+    if (targetWindow) {
+      args.push("--window", targetWindow);
+    }
+    await run`${orchestra} ${args}`;
+  };
+
   return {
     "chat.message": async () => {
       await runState("running");
@@ -234,6 +249,7 @@ export const OrchestraPlugin = async ({ $, directory, worktree }) => {
     "permission.ask": async (input, output) => {
       const action = input.title || input.type || "permission";
       await runState("waiting", action);
+      await notify("OpenCode", action);
     },
 
     event: async ({ event }) => {

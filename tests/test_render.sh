@@ -18,6 +18,7 @@ compare_fixture() {
 compare_fixture "$REPO_DIR/tests/fixtures/render-idle.input" "$REPO_DIR/tests/fixtures/render-idle.expected"
 compare_fixture "$REPO_DIR/tests/fixtures/render-running.input" "$REPO_DIR/tests/fixtures/render-running.expected"
 compare_fixture "$REPO_DIR/tests/fixtures/render-waiting.input" "$REPO_DIR/tests/fixtures/render-waiting.expected"
+compare_fixture "$REPO_DIR/tests/fixtures/render-unread.input" "$REPO_DIR/tests/fixtures/render-unread.expected"
 
 check_inactive_border_color() {
     tmp_output=$(mktemp "${TMPDIR:-/tmp}/orchestra-render.XXXXXX")
