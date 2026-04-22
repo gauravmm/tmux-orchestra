@@ -17,6 +17,15 @@ render_erase_eol() {
 	printf '\033[K'
 }
 
+render_spinner_color() {
+	spinner=$1
+	case "$spinner" in
+		claude)   printf '#D97757' ;;
+		braille)  printf 'blue' ;;
+		opencode) printf '#38BDF8' ;;
+	esac
+}
+
 render_bold_start() {
 	render_supports_color || return 0
 	printf '\033[1m'
@@ -113,10 +122,18 @@ render_state_glyph() {
 			set -- '·' '✻' '✽' '✶' '✱' '✢'
 			eval "printf '%s' \"\${$((frame % 6 + 1))}\""
 			;;
+		braille)
+			set -- '⠋' '⠙' '⠹' '⠸' '⠼' '⠴' '⠦' '⠧' '⠇' '⠏'
+			eval "printf '%s' \"\${$((frame % 10 + 1))}\""
+			;;
+		opencode)
+			set -- '◜' '◠' '◝' '◞' '◡' '◟'
+			eval "printf '%s' \"\${$((frame % 6 + 1))}\""
+			;;
 		*)
 			if [ "$nerd" = 'on' ]; then
-				set -- '⠋' '⠙' '⠹' '⠸'
-				eval "printf '%s' \"\${$((frame % 4 + 1))}\""
+				set -- '⠋' '⠙' '⠹' '⠸' '⠼' '⠴' '⠦' '⠧' '⠇' '⠏'
+				eval "printf '%s' \"\${$((frame % 10 + 1))}\""
 			else
 				printf '%s' '*'
 			fi
@@ -280,14 +297,12 @@ render_window_block() {
 
 	activity=$(render_activity "$state" "$action" "$cwd" "$last_cmd")
 	glyph=$(render_state_glyph "$state" "$frame" "$nerd" "$spinner")
+	glyph_color=$(render_spinner_color "$spinner")
 	if [ -n "$glyph" ] && [ -n "$activity" ]; then
-		detail_text="$glyph $activity"
-	elif [ -n "$glyph" ]; then
-		detail_text=$glyph
-	else
-		detail_text=$activity
+		activity=$(render_trim $((width - 4)) "$activity")
+	elif [ -z "$glyph" ]; then
+		activity=$(render_trim $((width - 2)) "$activity")
 	fi
-	detail_text=$(render_trim $((width - 2)) "$detail_text")
 
 	pill=$(render_phase_pill "$phase" "$phase_icon" "$phase_color")
 	progress_text=$(render_progress "$progress" "$progress_label" "$nerd")
@@ -341,7 +356,21 @@ render_window_block() {
 	bottom_pad=$(render_repeat "$_h" $((width - 1)))
 
 	with_style "$title_style" "$wait_color" '%s%s %s %s\n' "$_tl" "$_h" "$title_body" "$title_pad"
-	with_style "$row_style" "$wait_color" '%s %s' "$_v" "$detail_text"; render_erase_eol; printf '\n'
+	printf '%s ' "$_v"
+	[ "$row_style" = 'color' ] && render_color_start "$wait_color"
+	if [ -n "$glyph" ]; then
+		if [ -n "$glyph_color" ] && [ "$row_style" != 'color' ]; then
+			render_color_start "$glyph_color"
+			printf '%s' "$glyph"
+			render_reset
+		else
+			printf '%s' "$glyph"
+		fi
+		[ -n "$activity" ] && printf ' %s' "$activity"
+	else
+		printf '%s' "$activity"
+	fi
+	render_reset; render_erase_eol; printf '\n'
 	with_style "$row_style" "$wait_color" '%s %s' "$_v" "$meta_text"; render_erase_eol; printf '\n'
 	with_style "$row_style" "$wait_color" '%s%s\n' "$_bl" "$bottom_pad"
 }

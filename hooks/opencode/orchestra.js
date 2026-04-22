@@ -27,7 +27,7 @@ export const OrchestraPlugin = async ({ $, directory }) => {
   return {
     "tool.execute.before": async (input, output) => {
       pendingTools++;
-      await run`${orchestra} set-state running --action ${input.tool}`;
+      await run`${orchestra} set-state running --spinner opencode --action ${input.tool}`;
     },
 
     "tool.execute.after": async (input, output) => {
@@ -35,7 +35,7 @@ export const OrchestraPlugin = async ({ $, directory }) => {
       if (pendingTools === 0) {
         // Tool finished, but LLM is still processing results.
         // Stay in "running" until the response is fully generated.
-        await run`${orchestra} set-state running`;
+        await run`${orchestra} set-state running --spinner opencode`;
       }
     },
 
