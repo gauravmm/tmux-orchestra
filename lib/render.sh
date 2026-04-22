@@ -110,7 +110,7 @@ render_state_glyph() {
 	running)
 		case "$spinner" in
 		claude)
-			set -- '·' '✻' '✽' '✶' '✳' '✢'
+			set -- '·' '✻' '✽' '✶' '✱' '✢'
 			eval "printf '%s' \"\${$((frame % 6 + 1))}\""
 			;;
 		*)
