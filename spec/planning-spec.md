@@ -95,7 +95,7 @@ Plus: active status pills, progress bar (if `@ab_progress` set), unread dot (if 
 
 - Opened with `split-window -bhd -l <width>` (left side, no focus, fixed width).
 - Runs `orchestra-render`, which:
-  - Polls `tmux list-windows -F '#{window_id}|#{window_name}|#{@ab_agent_state}|#{@ab_current_action}|#{@ab_branch}|#{@ab_cwd}|#{@ab_last_cmd}|#{@ab_progress}|#{@ab_unread}|...'` every 500 ms.
+  - Polls `tmux list-windows -F '#{window_id}|#{window_name}|#{@ab_agent_state}|#{@ab_current_action}|#{@ab_branch}|#{@ab_cwd}|#{@ab_last_cmd}|#{@ab_progress}|#{@ab_unread}|...'` every 125 ms.
   - Subscribes to `set-hook` notifications via SIGUSR1 for instant redraws on `window-renamed`, `pane-focus-in`, `client-session-changed`.
   - Renders blocks: title bar (workspace name + branch), pill row, unicode progress bar `█████░░░░░ 50%`, the state-aware activity line (see render logic above), unread dot.
   - Highlights the active window; supports mouse click → `tmux select-window`.
@@ -168,7 +168,7 @@ Hard requirements: tmux ≥ 3.2 (for `display-popup`, modern format expansions, 
 
 ### Implementation language
 
-**POSIX shell, full stop.** Both the CLI and the `orchestra-render` TUI are single POSIX scripts — no Rust, no Go, no compiled binary, no build step. TPM clones the repo and the plugin works. This is an explicit constraint, not a "v0.1 default we'll revisit": a Rust rewrite would add a cross-compile matrix (Linux glibc/musl, macOS x86_64/arm64, WSL), force TPM to do a post-clone build or binary download, and raise the contribution barrier for the tmux crowd — all for a workload (a few option reads per 500 ms and a handful of `set-option` calls per agent event) that shell handles fine. Keep it shell.
+**POSIX shell, full stop.** Both the CLI and the `orchestra-render` TUI are single POSIX scripts — no Rust, no Go, no compiled binary, no build step. TPM clones the repo and the plugin works. This is an explicit constraint, not a "v0.1 default we'll revisit": a Rust rewrite would add a cross-compile matrix (Linux glibc/musl, macOS x86_64/arm64, WSL), force TPM to do a post-clone build or binary download, and raise the contribution barrier for the tmux crowd — all for a workload (a few option reads per 125 ms and a handful of `set-option` calls per agent event) that shell handles fine. Keep it shell.
 
 ## 7. Tradeoffs and known limitations
 

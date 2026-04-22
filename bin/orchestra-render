@@ -39,5 +39,5 @@ FRAME_INDEX=0
 while true; do
     redraw
     FRAME_INDEX=$((FRAME_INDEX + 1))
-    sleep_interruptible 0.5
+    sleep_interruptible 0.125
 done

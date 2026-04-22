@@ -2,7 +2,7 @@
 
 ## Project overview
 
-tmux-orchestra is a pure POSIX shell tmux plugin that renders a live sidebar pane showing per-window agent state (running/waiting/done), status pills, progress bars, and notifications. State flows exclusively through tmux user-options (`@ab_*`); there are no daemons, sockets, or files outside tmux itself. The renderer polls every 500 ms and wakes early on SIGUSR1.
+tmux-orchestra is a pure POSIX shell tmux plugin that renders a live sidebar pane showing per-window agent state (running/waiting/done), status pills, progress bars, and notifications. State flows exclusively through tmux user-options (`@ab_*`); there are no daemons, sockets, or files outside tmux itself. The renderer polls every 125 ms and wakes early on SIGUSR1.
 
 ## Repository layout
 
@@ -10,7 +10,7 @@ tmux-orchestra is a pure POSIX shell tmux plugin that renders a live sidebar pan
 orchestra.tmux          TPM entrypoint — init, hooks, keybindings
 bin/
   orchestra             CLI dispatcher (set-status, notify, set-state, …)
-  orchestra-render      Long-lived sidebar TUI (500 ms polling loop)
+  orchestra-render      Long-lived sidebar TUI (125 ms polling loop)
   orchestra-toggle      Open/close sidebar, cache width per session
   orchestra-follow      Move sidebar pane to new window on focus switch
   orchestra-notify      Platform-detecting notifier shim

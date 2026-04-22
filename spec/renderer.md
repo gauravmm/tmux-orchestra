@@ -8,12 +8,12 @@
 ```
 while true; do
     redraw
-    # Wait up to 500 ms, but wake on SIGUSR1 (from set-hooks)
-    sleep_interruptible 0.5
+    # Wait up to 125 ms, but wake on SIGUSR1 (from set-hooks)
+    sleep_interruptible 0.125
 done
 ```
 
-`sleep_interruptible`: trap SIGUSR1 to a no-op and run `sleep 0.5 &; wait $!` — the signal cancels the wait.
+`sleep_interruptible`: trap SIGUSR1 to a no-op and run `sleep 0.125 &; wait $!` — the signal cancels the wait.
 
 ## Data read (one tmux call per tick)
 
