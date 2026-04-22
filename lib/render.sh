@@ -12,6 +12,11 @@ render_reset() {
 	printf '\033[0m'
 }
 
+render_erase_eol() {
+	render_supports_color || return 0
+	printf '\033[K'
+}
+
 render_bold_start() {
 	render_supports_color || return 0
 	printf '\033[1m'
@@ -100,14 +105,23 @@ render_state_glyph() {
 	state=$1
 	frame=$2
 	nerd=$3
+	spinner=${4:-}
 	case "$state" in
 	running)
-		if [ "$nerd" = 'on' ]; then
-			set -- '⠋' '⠙' '⠹' '⠸'
-			eval "printf '%s' \"\${$((frame % 4 + 1))}\""
-		else
-			printf '%s' '*'
-		fi
+		case "$spinner" in
+		claude)
+			set -- '·' '✻' '✽' '✶' '✳' '✢'
+			eval "printf '%s' \"\${$((frame % 6 + 1))}\""
+			;;
+		*)
+			if [ "$nerd" = 'on' ]; then
+				set -- '⠋' '⠙' '⠹' '⠸'
+				eval "printf '%s' \"\${$((frame % 4 + 1))}\""
+			else
+				printf '%s' '*'
+			fi
+			;;
+		esac
 		;;
 	waiting)
 		if [ "$nerd" = 'on' ]; then
@@ -255,6 +269,7 @@ render_window_block() {
 	phase=${18}
 	phase_icon=${19}
 	phase_color=${20}
+	spinner=${21:-}
 
 	title_text=$window_name
 	title_text=$title_text$(render_named_branch "$branch" "$nerd")
@@ -264,7 +279,7 @@ render_window_block() {
 	[ "$pad" -lt 0 ] && pad=0
 
 	activity=$(render_activity "$state" "$action" "$cwd" "$last_cmd")
-	glyph=$(render_state_glyph "$state" "$frame" "$nerd")
+	glyph=$(render_state_glyph "$state" "$frame" "$nerd" "$spinner")
 	if [ -n "$glyph" ] && [ -n "$activity" ]; then
 		detail_text="$glyph $activity"
 	elif [ -n "$glyph" ]; then
@@ -326,8 +341,8 @@ render_window_block() {
 	bottom_pad=$(render_repeat "$_h" $((width - 1)))
 
 	with_style "$title_style" "$wait_color" '%s%s %s %s\n' "$_tl" "$_h" "$title_body" "$title_pad"
-	with_style "$row_style" "$wait_color" '%s %s\033[K\n' "$_v" "$detail_text"
-	with_style "$row_style" "$wait_color" '%s %s\033[K\n' "$_v" "$meta_text"
+	with_style "$row_style" "$wait_color" '%s %s' "$_v" "$detail_text"; render_erase_eol; printf '\n'
+	with_style "$row_style" "$wait_color" '%s %s' "$_v" "$meta_text"; render_erase_eol; printf '\n'
 	with_style "$row_style" "$wait_color" '%s%s\n' "$_bl" "$bottom_pad"
 }
 
@@ -337,12 +352,12 @@ render_rows() {
 	nerd=$3
 	wait_color=$4
 
-	while IFS='|' read -r session_name window_id window_name window_active state action branch cwd last_cmd progress progress_label unread last_notification phase phase_icon phase_color; do
+	while IFS='|' read -r session_name window_id window_name window_active state action branch cwd last_cmd progress progress_label unread last_notification phase phase_icon phase_color spinner; do
 		[ -n "$window_id" ] || continue
 		render_window_block "$width" "$frame" "$nerd" "$wait_color" \
 			"$session_name" "$window_id" "$window_name" "$window_active" \
 			"$state" "$action" "$branch" "$cwd" "$last_cmd" \
 			"$progress" "$progress_label" "$unread" "$last_notification" \
-			"$phase" "$phase_icon" "$phase_color"
+			"$phase" "$phase_icon" "$phase_color" "$spinner"
 	done
 }

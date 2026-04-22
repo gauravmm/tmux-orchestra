@@ -22,15 +22,15 @@ REPO_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")/../.." && pwd)
 ORCHESTRA="$REPO_DIR/bin/orchestra"
 
 echo "[1/6] LLM is writing a response..."
-"$ORCHESTRA" set-state running
+"$ORCHESTRA" set-state running --spinner braille
 sleep 2
 
 echo "[2/6] LLM calls a tool..."
-"$ORCHESTRA" set-state running --action "read_file"
+"$ORCHESTRA" set-state running --spinner braille --action "read_file"
 sleep 2
 
 echo "[3/6] Tool finished, LLM still processing..."
-"$ORCHESTRA" set-state running
+"$ORCHESTRA" set-state running --spinner braille
 sleep 2
 
 echo "[4/6] LLM asks for permission..."
@@ -38,7 +38,7 @@ echo "[4/6] LLM asks for permission..."
 sleep 2
 
 echo "[5/6] LLM continues writing after approval..."
-"$ORCHESTRA" set-state running
+"$ORCHESTRA" set-state running --spinner braille
 sleep 2
 
 echo "[6/6] Turn complete."

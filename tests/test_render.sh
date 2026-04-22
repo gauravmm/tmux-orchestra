@@ -18,3 +18,17 @@ compare_fixture() {
 compare_fixture "$REPO_DIR/tests/fixtures/render-idle.input" "$REPO_DIR/tests/fixtures/render-idle.expected"
 compare_fixture "$REPO_DIR/tests/fixtures/render-running.input" "$REPO_DIR/tests/fixtures/render-running.expected"
 compare_fixture "$REPO_DIR/tests/fixtures/render-waiting.input" "$REPO_DIR/tests/fixtures/render-waiting.expected"
+
+check_spinner() {
+    name=$1; frame=$2; expected=$3
+    actual=$(render_state_glyph running "$frame" off "$name")
+    [ "$actual" = "$expected" ] || {
+        printf 'spinner %s frame %d: expected "%s" got "%s"\n' "$name" "$frame" "$expected" "$actual" >&2
+        exit 1
+    }
+}
+check_spinner claude 0 '·'
+check_spinner claude 1 '✻'
+check_spinner claude 3 '✶'
+check_spinner claude 5 '✢'
+check_spinner claude 6 '·'

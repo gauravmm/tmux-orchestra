@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "orchestra set-state running --action \"$(jq -r '.tool_name + \": \" + (.tool_input | tostring | .[0:100])' <<< \"$CLAUDE_HOOK_INPUT\")\""
+            "command": "orchestra set-state running --spinner claude --action \"$(jq -r '.tool_name + \": \" + (.tool_input | tostring | .[0:100])' <<< \"$CLAUDE_HOOK_INPUT\")\""
           }
         ]
       }
