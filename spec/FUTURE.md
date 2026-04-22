@@ -4,7 +4,6 @@ Features planned
 
 ## Bugfixes
 
-- colors not rendering correctly
 - sidebar flashes `sh` when moving windows. Is it possible to never acquire focus to the sidebar when moving?
 
 ## Near

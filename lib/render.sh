@@ -326,8 +326,8 @@ render_window_block() {
 	bottom_pad=$(render_repeat "$_h" $((width - 1)))
 
 	with_style "$title_style" "$wait_color" '%s%s %s %s\n' "$_tl" "$_h" "$title_body" "$title_pad"
-	with_style "$row_style" "$wait_color" '%s %s\n' "$_v" "$detail_text"
-	with_style "$row_style" "$wait_color" '%s %s\n' "$_v" "$meta_text"
+	with_style "$row_style" "$wait_color" '%s %s\033[K\n' "$_v" "$detail_text"
+	with_style "$row_style" "$wait_color" '%s %s\033[K\n' "$_v" "$meta_text"
 	with_style "$row_style" "$wait_color" '%s%s\n' "$_bl" "$bottom_pad"
 }
 
