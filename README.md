@@ -4,6 +4,10 @@
 CLI for agent status, notifications, and prompt-published context, then renders
 that state in a dedicated sidebar pane.
 
+![demo](media/demo.png)
+
+Its a shameless rip-off of cmux, vibe-coded in a day. Its only saving grace is that it is super handy. And has mouse support.
+
 ## Highlights
 
 - TPM-installable plugin entrypoint via `orchestra.tmux`
@@ -142,10 +146,11 @@ make test
 
 This is vibe coded over a day. The code quality is somewhere between "not great" and "its gonna take a flamethrower."
 
-Here's an honest view of what needs to be done to get it functionally on par with cmux:
+Here's an honest view of what needs to be done for more widespread use:
 
 1. Better hooks for `opencode`.
 2. More hooks (`claude code`, `codex`, etc.)
 3. Any styling support.
 4. More stable correlation of hooks to window. This one is pretty platform-specific.
 5. More performant. We've just about reached the limit with what you can do with bash.
+6. An agent skill, so the agent gets to decide what to put in the sidebar.
